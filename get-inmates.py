@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import time
+import datetime
 import sys
 
 def getContent(itm):
@@ -35,15 +36,18 @@ def processCharges(rows):
 
 # Main program
 
-# The -s is to suppress annoying error messages from xlrd
+importDate = datetime.datetime.now().strftime('%Y-%m-%d')
 argc = len(sys.argv)
-print(argc)
-if (argc < 2 or argc > 2):
-  print('Usage: get-inmates inputfilename')
+
+if (argc < 2 or argc > 3):
+  print('Usage: get-inmates inputfilename [YYYY-MM-DD]')
   sys.exit()
 
 inputFileName = sys.argv[1]
-print('Input file: ', inputFileName)
+if argc == 3:
+  importDate = sys.argv[2]
+
+print('Input file: ', inputFileName, ' input date: ', importDate)
 
 file = open(inputFileName)
 pageText = file.read()
