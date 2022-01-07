@@ -5,6 +5,7 @@ import sys
 import os
 import psycopg2
 from psycopg2 import extras
+import xlsxwriter
 
 import csv
 from dotenv import load_dotenv
@@ -150,12 +151,10 @@ def createRecentArrestsFile(inmates):
   global cutoffDate
   today = datetime.date.today()
   backdays = 3 if today.weekday() == 0 else 1
-  print('Backdays = ', backdays)
   days = datetime.timedelta(backdays)
   cutoffDate = today - days
-  print(len(inmates))
   latest = list(filter(checkDate, inmates))
-  print(len(latest))
+  print('Total arrests over past ', backdays, ' days: ', len(latest))
   rows = []
   for itm in latest:
     inmate = {}
@@ -173,21 +172,17 @@ def createRecentArrestsFile(inmates):
     for c in itm['charges']:
       inmate['charges'] += chargeLine(c)
     rows.append(inmate)
-  with open('latest_arrests-' + today.strftime('%Y-%m-%d') + '.csv', 'w', newline='') as newArrestsFile:
-    csv_writer = csv.writer(newArrestsFile)
-    count = 0
-    for inmate in rows:
-        if count == 0:
-    
-          # Writing headers of CSV file
-          header = inmate.keys()
-          csv_writer.writerow(header)
-          count += 1
-    
-        # Writing data of CSV file
-        csv_writer.writerow(inmate.values())
- 
 
+  workbook = xlsxwriter.Workbook('latest_arrests-' + today.strftime('%Y-%m-%d') + '.xlsx')
+  worksheet = workbook.add_worksheet()
+  count = 0
+  for inmate in rows:
+    if count == 0:
+      header = list(inmate.keys())
+      worksheet.write_row(count, 0, header)
+    worksheet.write_row(count + 1, 0, inmate.values())
+    count += 1
+  workbook.close()
 
 # Main program
 
@@ -216,7 +211,7 @@ soup = BeautifulSoup(pageText, 'html.parser')
 
 nms = soup.find_all("div", "p2c-card-title")
 cards = soup.find_all("md-card", "p2c-card")
-print('Total cards: ', len(cards))
+print('Total inmates: ', len(cards))
 inmates = []
 for card in cards:
   itm = {}
@@ -243,8 +238,8 @@ for card in cards:
       itm['charges'] = processCharges(rows)
   inmates.append(processInmateRecord(itm, importDate))
 
-loadToDatabase(inmates)
 createRecentArrestsFile(inmates)
+loadToDatabase(inmates)
 
 
 
