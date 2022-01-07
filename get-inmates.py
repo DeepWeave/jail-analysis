@@ -4,6 +4,9 @@ import datetime
 import sys
 import os
 import psycopg2
+from psycopg2 import extras
+
+import csv
 from dotenv import load_dotenv
 
 def getContent(itm):
@@ -34,6 +37,11 @@ def processCharges(rows):
     charge['bond_type'] = getContent(cols[4])
     charge['bond_status'] = getContent(cols[5])
     charge['bond_amount'] = getContent(cols[6])
+    val = getContent(cols[6])
+    if val:
+      val = val.replace(',','').replace('$','')
+    charge['bond_amount'] = int(float(val) * 100)
+
     charges.append(charge)
   return charges
 
@@ -55,8 +63,6 @@ def processInmateRecord(itm, importDate):
   if itm['race'] not in races:
     raise('Unknown race ', itm['race'])
   inmate['race'] = races[itm['race']]
-  inmate['height'] = itm['height'].replace("'","''") if itm['height'] else None
-  inmate['weight'] = itm['weight']
   val = itm['arrested']
   inmate['arrested'] = val if val is None else datetime.datetime.strptime(val, '%m/%d/%Y').strftime('%Y-%m-%d')
   val = itm['court_date']
@@ -69,7 +75,8 @@ def processInmateRecord(itm, importDate):
   val = itm['total_bond_amount:']
   if val:
     val = val.replace(',','').replace('$','')
-  inmate['total_bond_amount'] = int(float(val) * 100)
+  inmate['total_bond'] = int(float(val) * 100)
+  inmate['charges'] = itm['charges']
   return inmate
 
 def loadToDatabase(inmates):
@@ -85,31 +92,101 @@ def loadToDatabase(inmates):
     user = USER
   )
   cur = conn.cursor()
+  count = 0
   for m in inmates:
+    count += 1
+    if count%25 == 0:
+      sys.stdout.write('...'+str(count))
+      sys.stdout.flush()
     sql = 'insert into jaildata.daily_inmates ' + \
-    '(import_date, name, age, gender, race, height, weight, arrested, court_date, released, primary_charge, holding_facility, total_bond) ' +\
-    "VALUES ("
-    sql +=  "'" + m['import_date'] + "', "
-    sql +=  "'" + m['name'] + "', "
-    sql += str(m['age']) + ','
-    sql += "'" + m['gender'] + "', '" + m['race'] + "', "
-    sql += ("'" + m['height'] + "', " ) if m['height'] else 'null, '
-    sql += ("'" + m['weight'] + "', ") if m['weight'] else 'null, '
-    sql += ("'" + m['arrested'] + "'") if m['arrested'] else 'null'
-    sql += ','
-    sql += ("'" + m['court_date'] + "'") if m['court_date'] else 'null'
-    sql += ','
-    sql += ("'" + m['released'] + "'") if m['released'] else 'null'
-    sql += ','
-    sql += " '" + m['primary_charge'] + "', " 
-    sql += ("'" + m['holding_facility'] + "',") if m['holding_facility'] else 'null, '
-    sql +=  str(m['total_bond_amount']) + ') returning id'
-    cur.execute(sql)
+    '(import_date, name, age, gender, race, arrested, court_date, released, primary_charge, holding_facility, total_bond) ' +\
+    'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) returning id'
+    cur.execute(sql, (
+      m['import_date'], m['name'], m['age'], m['gender'], m['race'],
+      m['arrested'], m['court_date'], m['released'], m['primary_charge'],
+      m['holding_facility'], m['total_bond']
+    ))
     id = cur.fetchone()[0]
+
+    values = []
+    for c in m['charges']:
+      values.append((
+          id, c['charge'], c['description'], c['status'], c['docket_number'],
+          c['bond_type'], c['bond_status'], c['bond_amount']
+        ))
+    sql = 'insert into jaildata.daily_charges ' \
+      '(defendant_id, charge, description, status, docket_number, bond_type, bond_status, bond_amount) ' + \
+      'VALUES %s'
+    try:
+      extras.execute_values(cur, sql, values)
+    except psycopg2.Error as e:
+      print(e)
 
   conn.commit()
   cur.close()
   conn.close()
+  print('')
+
+
+cutoffDate = None
+
+def checkDate(itm):
+  global cutoffDate
+  val = False
+  if itm['arrested']:
+    iDate = datetime.datetime.strptime(itm['arrested'], '%Y-%m-%d').date()
+    val =  iDate >= cutoffDate
+  return val
+
+def chargeLine(c):
+  line = c['charge'] + '; ' + c ['description'] + '; ' 
+  line += (c['status'] if c['status'] else 'None') + '; '
+  line += (c['docket_number'] if c['docket_number'] else 'None') + '; '
+  line += (c['bond_type'] if c['bond_type'] else '?') + '; '
+  line += ("${:,.2f}".format(c['bond_amount']/100) if c['bond_amount'] else '-') + '\n'
+  return line
+
+def createRecentArrestsFile(inmates):
+  global cutoffDate
+  today = datetime.date.today()
+  backdays = 3 if today.weekday() == 0 else 1
+  print('Backdays = ', backdays)
+  days = datetime.timedelta(backdays)
+  cutoffDate = today - days
+  print(len(inmates))
+  latest = list(filter(checkDate, inmates))
+  print(len(latest))
+  rows = []
+  for itm in latest:
+    inmate = {}
+    inmate['name'] = itm['name']
+    inmate['gender'] = itm['gender']
+    inmate['arrested'] = itm['arrested']
+    inmate['court_date'] = itm['court_date']
+    inmate['released'] = itm['released']
+    inmate['primary_charge'] = itm['primary_charge']
+    inmate['holding_facility'] = itm['holding_facility']
+    inmate['total_bond'] = "${:,.2f}".format(itm['total_bond']/100)
+    inmate['age'] = itm['age']
+    inmate['race'] = itm['race']
+    inmate['charges'] = ''
+    for c in itm['charges']:
+      inmate['charges'] += chargeLine(c)
+    rows.append(inmate)
+  with open('latest_arrests-' + today.strftime('%Y-%m-%d') + '.csv', 'w', newline='') as newArrestsFile:
+    csv_writer = csv.writer(newArrestsFile)
+    count = 0
+    for inmate in rows:
+        if count == 0:
+    
+          # Writing headers of CSV file
+          header = inmate.keys()
+          csv_writer.writerow(header)
+          count += 1
+    
+        # Writing data of CSV file
+        csv_writer.writerow(inmate.values())
+ 
 
 
 # Main program
@@ -166,8 +243,8 @@ for card in cards:
       itm['charges'] = processCharges(rows)
   inmates.append(processInmateRecord(itm, importDate))
 
-print('Total cards: ', len(cards))
 loadToDatabase(inmates)
+createRecentArrestsFile(inmates)
 
 
 

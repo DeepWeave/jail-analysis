@@ -15,6 +15,17 @@ CREATE TABLE jaildata.daily_inmates (
     total_bond integer
 );
 
+CREATE TABLE jaildata.daily_charges (
+  defendant_id integer,
+  charge text,
+  description text,
+  status varchar(32),
+  docket_number varchar(128),
+  bond_type varchar(32), 
+  bond_status varchar(32),
+  bond_amount integer
+);
+
 insert into jaildata.daily_inmates (import_date, name, age, gender, race, height, weight, arrested, court_date,
 released, primary_charge, holding_facility, total_bond)
 values (
