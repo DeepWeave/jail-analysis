@@ -1,13 +1,11 @@
-from bs4 import BeautifulSoup
-import time
 import datetime
 import sys
 import os
+from bs4 import BeautifulSoup
 import psycopg2
 from psycopg2 import extras
 import xlsxwriter
 
-import csv
 from dotenv import load_dotenv
 
 def getContent(itm):
@@ -158,7 +156,12 @@ def createRecentArrestsFile(inmates):
   rows = []
   for itm in latest:
     inmate = {}
+    inmate['ctrm'] = None
     inmate['name'] = itm['name']
+    inmate['atty'] = None
+    inmate['PDO appt'] = None
+    inmate['notes'] = None
+    inmate['bond chg'] = None
     inmate['gender'] = itm['gender']
     inmate['arrested'] = itm['arrested']
     inmate['court_date'] = itm['court_date']
