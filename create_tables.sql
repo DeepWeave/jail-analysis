@@ -25,11 +25,3 @@ CREATE TABLE jaildata.daily_charges (
   bond_status varchar(32),
   bond_amount integer
 );
-
-insert into jaildata.daily_inmates (import_date, name, age, gender, race, height, weight, arrested, court_date,
-released, primary_charge, holding_facility, total_bond)
-values (
-	'2022-01-03', 'ZOLNOSKI, NOAH ALEXANDER ', 24, 'M', 'W', 
-	'5'' 10"', '210 lbs', '2021-07-14', null, null, '14-415.1|5224|G POSSESSION OF FIREARM BY FELON',
-	'CENTRAL', 5000
-)
