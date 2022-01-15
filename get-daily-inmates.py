@@ -156,11 +156,11 @@ def createRecentArrestsFile(inmates):
   rows = []
   for itm in latest:
     inmate = {}
-    inmate['ctrm'] = None
+    inmate['cal'] = None
     inmate['name'] = itm['name']
     inmate['atty'] = None
-    inmate['PDO appt'] = None
     inmate['notes'] = None
+    inmate['PDO appt'] = None
     inmate['bond chg'] = None
     inmate['gender'] = itm['gender']
     inmate['arrested'] = itm['arrested']
