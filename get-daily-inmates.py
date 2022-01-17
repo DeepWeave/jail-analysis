@@ -213,15 +213,6 @@ token = os.environ.get("api-token")
 importFileName = None
 importDate = datetime.datetime.now().strftime('%Y-%m-%d')
 backDays = 1
-# argc = len(sys.argv)
-
-# if (argc < 2 or argc > 3):
-#   print('Usage: get-inmates inputfilename [YYYY-MM-DD]')
-#   sys.exit()
-
-# inputFileName = sys.argv[1]
-# if argc == 3:
-#   importDate = sys.argv[2]
 
 parser = createArgParser()
 args = parser.parse_args()
@@ -236,7 +227,6 @@ print('Input file: ', inputFileName, ' input date: ', importDate, ', backDays = 
 file = open(inputFileName)
 pageText = file.read()
 file.close()
-#pageText.replace('\n', '')
 soup = BeautifulSoup(pageText, 'html.parser')
 
 nms = soup.find_all("div", "p2c-card-title")
