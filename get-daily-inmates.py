@@ -1,7 +1,9 @@
 import datetime
 import sys
 import os
+import argparse
 from bs4 import BeautifulSoup
+import requests
 import psycopg2
 from psycopg2 import extras
 import xlsxwriter
@@ -145,10 +147,17 @@ def chargeLine(c):
   line += ("${:,.2f}".format(c['bond_amount']/100) if c['bond_amount'] else '-') + '\n'
   return line
 
-def createRecentArrestsFile(inmates):
+def computeBackDays(defaultValue):
+  if defaultValue:
+    return defaultValue
+  today = datetime.date.today()
+  backDays = 3 if today.weekday() == 0 else 1
+  return backDays
+
+def createRecentArrestsFile(inmates, backdays):
   global cutoffDate
   today = datetime.date.today()
-  backdays = 3 if today.weekday() == 0 else 1
+#  backdays = 3 if today.weekday() == 0 else 1
   days = datetime.timedelta(backdays)
   cutoffDate = today - days
   latest = list(filter(checkDate, inmates))
@@ -187,24 +196,42 @@ def createRecentArrestsFile(inmates):
     count += 1
   workbook.close()
 
+def createArgParser():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('fileName')
+  parser.add_argument('-i', '--importDate', help='IMPORTDATE of the form YYYY-MM-DD')
+  parser.add_argument('-b', '--backDays', type=int, help='Default is 3 days on Monday, 1 day otherwise')
+  parser.add_argument('-d', '--database', type=int, help='1 to load to the database, 0 to skip')
+  return parser
+
 # Main program
 
 load_dotenv()
 import os
 token = os.environ.get("api-token")
 
+importFileName = None
 importDate = datetime.datetime.now().strftime('%Y-%m-%d')
-argc = len(sys.argv)
+backDays = 1
+# argc = len(sys.argv)
 
-if (argc < 2 or argc > 3):
-  print('Usage: get-inmates inputfilename [YYYY-MM-DD]')
-  sys.exit()
+# if (argc < 2 or argc > 3):
+#   print('Usage: get-inmates inputfilename [YYYY-MM-DD]')
+#   sys.exit()
 
-inputFileName = sys.argv[1]
-if argc == 3:
-  importDate = sys.argv[2]
+# inputFileName = sys.argv[1]
+# if argc == 3:
+#   importDate = sys.argv[2]
 
-print('Input file: ', inputFileName, ' input date: ', importDate)
+parser = createArgParser()
+args = parser.parse_args()
+inputFileName = args.fileName
+useDB = False if args.database == 0 else True
+backDays = computeBackDays(args.backDays)
+if args.importDate:
+  importDate = args.importDate
+
+print('Input file: ', inputFileName, ' input date: ', importDate, ', backDays = ', backDays, 'useDB = ', useDB)
 
 file = open(inputFileName)
 pageText = file.read()
@@ -241,8 +268,9 @@ for card in cards:
       itm['charges'] = processCharges(rows)
   inmates.append(processInmateRecord(itm, importDate))
 
-createRecentArrestsFile(inmates)
-loadToDatabase(inmates)
+createRecentArrestsFile(inmates, backDays)
+if useDB:
+  loadToDatabase(inmates)
 
 
 
