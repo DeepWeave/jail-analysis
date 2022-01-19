@@ -207,8 +207,6 @@ def createArgParser():
 # Main program
 
 load_dotenv()
-import os
-token = os.environ.get("api-token")
 
 importFileName = None
 importDate = datetime.datetime.now().strftime('%Y-%m-%d')

@@ -25,3 +25,14 @@ CREATE TABLE jaildata.daily_charges (
   bond_status varchar(32),
   bond_amount integer
 );
+
+CREATE TABLE jaildata.stays (
+  id serial PRIMARY KEY,
+  defendant_id integer,
+  name text NOT NULL,
+  gender varchar(1),
+  race varchar(2),
+  start_date date,
+  end_date date,
+  use_flag integer default 1
+)
