@@ -184,8 +184,8 @@ def createRecentArrestsFile(inmates, backdays):
     for c in itm['charges']:
       inmate['charges'] += chargeLine(c)
     rows.append(inmate)
-
-  workbook = xlsxwriter.Workbook('latest_arrests-' + today.strftime('%Y-%m-%d') + '.xlsx')
+  prefix = 'latest_arrests-' + str(backDays) + 'day-'
+  workbook = xlsxwriter.Workbook(prefix + today.strftime('%Y-%m-%d') + '.xlsx')
   worksheet = workbook.add_worksheet()
   count = 0
   for inmate in rows:
