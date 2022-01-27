@@ -1,3 +1,6 @@
 data
 .env
 latest_arrests*
+node_modules
+inmates.json
+
