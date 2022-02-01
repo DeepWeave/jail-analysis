@@ -102,8 +102,11 @@ def loadEnds(ends, endDate):
 ####################################
 
 load_dotenv()
-today = '2022-01-27'
+#today = '2022-02-01'
+today = datetime.datetime.now().strftime('%Y-%m-%d')
 yesterday = computeYesterday(today)
+print(today, yesterday)
+
 # Find starting stays
 starts = computeDiff(today, yesterday)
 loadStarts(starts, today)
