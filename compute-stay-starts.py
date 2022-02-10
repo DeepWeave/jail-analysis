@@ -42,7 +42,7 @@ def computeDiff(date1, date2):
   print('Entries: ', len(staySet))
   if len(staySet) > 0:
     id, name, gender, race = staySet[0]
-    print('id, name, gender, race ', id, name, gender, race)
+    print('id, name, gender, race')
 
   conn.commit()
   cur.close()
