@@ -167,21 +167,24 @@ def createRecentArrestsFile(inmates, backdays):
     inmate = {}
     inmate['cal'] = None
     inmate['name'] = itm['name']
-    inmate['atty_on_this'] = None
-    inmate['atty_on_other'] = None
+    inmate['ADMN'] = None
+    inmate['atty on this'] = None
+    inmate['atty on other'] = None
     inmate['notes'] = None
     inmate['PDO appt\'d'] = None
-    inmate['total_bond'] = "${:,.2f}".format(itm['total_bond']/100)
+    inmate['Ct Date'] = None
+    inmate['Conflict Info'] = None
+    inmate['total bond'] = "${:,.2f}".format(itm['total_bond']/100)
     inmate['bond chg'] = None
-    inmate['add_to_bond_cal'] = None
+    inmate['add to bond cal'] = None
     inmate['charges'] = ''
     inmate['gender'] = itm['gender']
     inmate['age'] = itm['age']
     inmate['race'] = itm['race']
     inmate['arrested'] = itm['arrested']
-    inmate['court_date'] = itm['court_date']
+    inmate['court date'] = itm['court_date']
     inmate['released'] = itm['released']
-    inmate['holding_facility'] = itm['holding_facility']
+    inmate['holding facility'] = itm['holding_facility']
 
     for c in itm['charges']:
       inmate['charges'] += chargeLine(c)

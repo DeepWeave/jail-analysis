@@ -3,4 +3,6 @@ data
 latest_arrests*
 node_modules
 inmates.json
+.ipynb_checkpoints
+.DS_Store
 

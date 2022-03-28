@@ -36,3 +36,14 @@ CREATE TABLE jaildata.stays (
   end_date date,
   use_flag integer default 1
 )
+
+CREATE TABLE jaildata.charge_definitions (
+  id serial PRIMARY KEY,
+  rank integer, 
+  level varchar(5),
+  charge text,
+  description text,
+  is_violent smallint,
+  is_dwi smallint,
+  is_violation smallint
+)
