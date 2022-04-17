@@ -148,23 +148,107 @@ def chargeLine(c):
   return line
 
 def computeBackDays(defaultValue):
-  if defaultValue:
+  print('Backdays is ', defaultValue)
+  if defaultValue is not None:
     return defaultValue
   today = datetime.date.today()
   backDays = 3 if today.weekday() == 0 else 1
   return backDays
 
+def createColumnFormats(sample, workbook, worksheet):
+  colCount = len(sample.keys())
+#  columnFormats = [{ 'width': 40, 'format': workbook.add_format()}] * colCount
+#  print(columnFormats)
+  baseFormat = workbook.add_format({'font_color': 'black', 'text_wrap':True, 'valign': 'top'})
+  baseFormat.set_border(1)
+  i = 0
+  worksheet.set_column(i, i, 5, baseFormat) #cal
+  i = i + 1
+  worksheet.set_column(i, i, 22, baseFormat) #name
+  i = i + 1
+  worksheet.set_column(i, i, 6, baseFormat) #ADMN
+  i = i + 1
+  worksheet.set_column(i, i, 6, baseFormat) #atty-this
+  i = i + 1
+  worksheet.set_column(i, i, 6, baseFormat) #atty-other
+  i = i + 1
+  worksheet.set_column(i, i, 20, baseFormat) #notes
+  i = i + 1
+  worksheet.set_column(i, i, 7, baseFormat) #PDO
+  i = i + 1
+  worksheet.set_column(i, i, 7, baseFormat) #Ct-date
+  i = i + 1
+  worksheet.set_column(i, i, 10, baseFormat) #Conflict
+  i = i + 1
+  worksheet.set_column(i, i, 10, baseFormat) #Total bond
+  i = i + 1
+  worksheet.set_column(i, i, 7, baseFormat) #Bond chg
+  i = i + 1
+  worksheet.set_column(i, i, 7, baseFormat) #add to bond cal
+  i = i + 1
+  worksheet.set_column(i, i, 100, baseFormat) #charges
+  i = i + 1
+  worksheet.set_column(i, i, 3, baseFormat) #gender
+  i = i + 1
+  worksheet.set_column(i, i, 3, baseFormat) #age
+  i = i + 1
+  worksheet.set_column(i, i, 3, baseFormat) #race
+  i = i + 1
+  worksheet.set_column(i, i, 9, baseFormat) #arrested
+  i = i + 1
+  worksheet.set_column(i, i, 9, baseFormat) #court data
+  i = i + 1
+  worksheet.set_column(i, i, 9, baseFormat)# released
+  i = i + 1
+  worksheet.set_column(i, i, 9, baseFormat) #holding facility
+
+  a_misd = workbook.add_format({'font_color': 'lightslategray', 'bold': True})
+  a_ad1a = workbook.add_format({'font_color': '#244061', 'bold': True})
+  a_ad2b = workbook.add_format({'font_color': '#02b050', 'bold': True})
+  a_ad3b = workbook.add_format({'font_color': '#974805', 'bold': True})
+  a_9999 = workbook.add_format({'font_color': '#974805', 'bold': True})
+  c_yes = workbook.add_format({'font_color': '#02b050'})
+  d_none = workbook.add_format({'bg_color': '#c6efce'})
+  g_yes = workbook.add_format({'bg_color': '#ffeb9c'})
+  g_noneed = workbook.add_format({'bg_color': '#d8d8d8'})
+  m_sentenced = workbook.add_format({'bg_color': '#c6efce'})
+  m_nobond = workbook.add_format({'bg_color': '#ffc7ce'})
+  m_support = workbook.add_format({'bg_color': '#cef0cc'})
+
+  i_na = workbook.add_format({'bg_color': '#DCDCDC'})
+  l_no = workbook.add_format({'bg_color': '#DCDCDC'})
+  c_no = workbook.add_format({'bg_color': '#DCDCDC'})
+
+  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"MISD"', 'format': a_misd})
+  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"AD1A"', 'format': a_ad1a})
+  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"AD2B"', 'format': a_ad2b})
+  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"AD3B"', 'format': a_ad3b})
+  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"9999"', 'format': a_9999})
+  worksheet.conditional_format('C2:C1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': c_yes})
+  worksheet.conditional_format('D2:D1000', {'type': 'text', 'criteria': 'containing', 'value': 'none', 'format': d_none})
+  worksheet.conditional_format('G2:G1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': g_yes})
+  worksheet.conditional_format('G2:G1000', {'type': 'text', 'criteria': 'containing', 'value': 'no need', 'format': g_noneed})
+  worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'sentenced', 'format': m_sentenced})
+  worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'no bond', 'format': m_nobond})
+  worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'support', 'format': m_support})
+  worksheet.conditional_format('I2:I1000', {'type': 'text', 'criteria': 'containing', 'value': 'n/a', 'format': i_na})
+  worksheet.conditional_format('L2:L1000', {'type': 'text', 'criteria': 'containing', 'value': 'no', 'format': l_no})
+  worksheet.conditional_format('C2:C1000', {'type': 'text', 'criteria': 'containing', 'value': 'no', 'format': c_no})
+  
 def createRecentArrestsFile(inmates, backdays):
   global cutoffDate
   today = datetime.date.today()
-#  backdays = 3 if today.weekday() == 0 else 1
   days = datetime.timedelta(backdays)
   cutoffDate = today - days
   latest = list(filter(checkDate, inmates))
   print('Total arrests over past ', backdays, ' days: ', len(latest))
+  pdo = ['', 'yes', 'no need', 'who knows', 'yes', 'no need']
+  i = 0
   rows = []
   for itm in latest:
     inmate = {}
+    if (i > 4):
+      i = 0
     inmate['cal'] = None
     inmate['name'] = itm['name']
     inmate['ADMN'] = None
@@ -185,6 +269,7 @@ def createRecentArrestsFile(inmates, backdays):
     inmate['court date'] = itm['court_date']
     inmate['released'] = itm['released']
     inmate['holding facility'] = itm['holding_facility']
+    i = i+1
 
     for c in itm['charges']:
       inmate['charges'] += chargeLine(c)
@@ -192,11 +277,19 @@ def createRecentArrestsFile(inmates, backdays):
   prefix = 'latest_arrests-' + str(backDays) + 'day-'
   workbook = xlsxwriter.Workbook(prefix + today.strftime('%Y-%m-%d') + '.xlsx')
   worksheet = workbook.add_worksheet()
+  header = '&LPage &P of &N' + '&CFIRST APP - ' + today.strftime('%Y-%m-%d')
+
+  worksheet.set_landscape()
+  worksheet.set_header(header)
+  worksheet.print_area('A1:L10000')
+
+
+  columnFormats = createColumnFormats(rows[0], workbook, worksheet)
   count = 0
   for inmate in rows:
     if count == 0:
       header = list(inmate.keys())
-      worksheet.write_row(count, 0, header)
+      worksheet.write_row(count, 0, header, workbook.add_format({'font_color': 'black', 'bold': True}))
     worksheet.write_row(count + 1, 0, inmate.values())
     count += 1
   workbook.close()

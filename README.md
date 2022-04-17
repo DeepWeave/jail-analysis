@@ -60,7 +60,7 @@ select distinct
     ) a
   group by a.name) b
   where cnt > 1
-  ORDER BY max desc
+  ORDER BY cnt desc
 
 ## Entries & Exits
   select count(defendant_id), start_date from jaildata.stays
@@ -73,6 +73,17 @@ select distinct
   group by end_date
   order by end_date asc
 
+## Sent to Lee 3/30
+select s.start_date as date, d.arrested, s.name,
+	c.charge, c.description, c.docket_number, c.status, c.bond_type, c.bond_status, c.bond_amount,
+	 s.race, s.gender
+from stays s
+left join daily_charges c
+on s.defendant_id = c.defendant_id
+left join daily_inmates d
+on d.id = s.defendant_id
+where s.use_flag = 1
+
 From Trevor:
 I checked out the jail web site. Here is a `curl` command line you can use to automatically retrieve the data:
 
@@ -81,3 +92,6 @@ curl -d '{"FilterOptionsParameters":{"IntersectionSearch":true,"SearchText":"","
 This saves the data as a JSON file. The `Take` parameter is what determines how many results to return and the `Skip` parameter indicates at which record to start retrieving. If you set `Take` to something like 500, it should return the entire dataset. Otherwise, there's a `Total` property at the root of the JSON object that indicates how many records there are and you should be able to easily write a script to do multiple API calls and page through the data.
 
 Oh, and in case it matters, 23 is the agency ID. It looks like there is only one agency for this page, so it will always be 23.
+
+update jaildata.charge_definitions
+set f_or_m = 'F', rank=8, notes='F-I, assume F' where id = 354
