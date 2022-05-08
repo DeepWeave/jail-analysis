@@ -15,9 +15,8 @@ insert into jaildata.charge_definitions (id, level, f_or_m, rank, flag, estimate
 										 notes, charge, description, is_violent, is_dwi, is_violation)
 values 
     (40x, 'NONE', 'U', 0, 0, 0, 0, '','20-150.1|4552|NONE','IMPROPER PASSING ON RIGHT', 0,0,0),
-    (40y, '2', 'M', 2, 0, 0, 0, '','20-63(G)|5573|2','COVERING/DISGUISING REG PLATE', 0,0,0),
+    (40y, '2', 'M', 2, 0, 0, 0, '','20-63(G)|5573|2','COVERING/DISGUISING REG PLATE', 0,0,0)
   ;
---    (396, 'I', 'F', 10, 0, 0, 0, 'notes','charge','description', 0,0,0)
 -- select * from charge_definitions order by id desc
   
 ## Updating multiple charge types
@@ -34,7 +33,14 @@ where a.id = c.id
 
 ## Daily inmate count
 select import_date, count(id) from jaildata.daily_inmates
-group by import_date
+group by import_date order by import_date desc
+
+OR
+
+select import_date, count(id) from jaildata.daily_inmates a
+LEFT JOIN charges_summary c on a.id = c.defendant_id
+where c.not_primary_custodian = 1
+group by import_date order by import_date desc
 
 ## Get level from charge field
 select distinct 
@@ -95,3 +101,4 @@ Oh, and in case it matters, 23 is the agency ID. It looks like there is only one
 
 update jaildata.charge_definitions
 set f_or_m = 'F', rank=8, notes='F-I, assume F' where id = 354
+

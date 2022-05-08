@@ -148,7 +148,6 @@ def chargeLine(c):
   return line
 
 def computeBackDays(defaultValue):
-  print('Backdays is ', defaultValue)
   if defaultValue is not None:
     return defaultValue
   today = datetime.date.today()
@@ -207,7 +206,9 @@ def createColumnFormats(sample, workbook, worksheet):
   a_ad2b = workbook.add_format({'font_color': '#02b050', 'bold': True})
   a_ad3b = workbook.add_format({'font_color': '#974805', 'bold': True})
   a_9999 = workbook.add_format({'font_color': '#974805', 'bold': True})
+  a_x = workbook.add_format({'bg_color': '#DCDCDC'})
   c_yes = workbook.add_format({'font_color': '#02b050'})
+  c_na = workbook.add_format({'bg_color': '#DCDCDC'})
   d_none = workbook.add_format({'bg_color': '#c6efce'})
   g_yes = workbook.add_format({'bg_color': '#ffeb9c'})
   g_noneed = workbook.add_format({'bg_color': '#d8d8d8'})
@@ -216,7 +217,9 @@ def createColumnFormats(sample, workbook, worksheet):
   m_support = workbook.add_format({'bg_color': '#cef0cc'})
 
   i_na = workbook.add_format({'bg_color': '#DCDCDC'})
+  i_xa = workbook.add_format({'bg_color': '#ffeb9c'})
   l_no = workbook.add_format({'bg_color': '#DCDCDC'})
+  l_yes = workbook.add_format({'bg_color': '#ffeb9c'})
   c_no = workbook.add_format({'bg_color': '#DCDCDC'})
 
   worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"MISD"', 'format': a_misd})
@@ -224,7 +227,9 @@ def createColumnFormats(sample, workbook, worksheet):
   worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"AD2B"', 'format': a_ad2b})
   worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"AD3B"', 'format': a_ad3b})
   worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"9999"', 'format': a_9999})
+  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"x"', 'format': a_x})
   worksheet.conditional_format('C2:C1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': c_yes})
+  worksheet.conditional_format('C2:C1000', {'type': 'text', 'criteria': 'containing', 'value': 'n/a', 'format': c_na})
   worksheet.conditional_format('D2:D1000', {'type': 'text', 'criteria': 'containing', 'value': 'none', 'format': d_none})
   worksheet.conditional_format('G2:G1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': g_yes})
   worksheet.conditional_format('G2:G1000', {'type': 'text', 'criteria': 'containing', 'value': 'no need', 'format': g_noneed})
@@ -232,10 +237,12 @@ def createColumnFormats(sample, workbook, worksheet):
   worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'no bond', 'format': m_nobond})
   worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'support', 'format': m_support})
   worksheet.conditional_format('I2:I1000', {'type': 'text', 'criteria': 'containing', 'value': 'n/a', 'format': i_na})
+  worksheet.conditional_format('I2:I1000', {'type': 'text', 'criteria': 'containing', 'value': 'xa', 'format': i_xa})
   worksheet.conditional_format('L2:L1000', {'type': 'text', 'criteria': 'containing', 'value': 'no', 'format': l_no})
+  worksheet.conditional_format('L2:L1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': l_yes})
   worksheet.conditional_format('C2:C1000', {'type': 'text', 'criteria': 'containing', 'value': 'no', 'format': c_no})
   
-def createRecentArrestsFile(inmates, backdays):
+def createRecentArrestsFile(inmates, backdays, importDate):
   global cutoffDate
   today = datetime.date.today()
   days = datetime.timedelta(backdays)
@@ -269,6 +276,8 @@ def createRecentArrestsFile(inmates, backdays):
     inmate['court date'] = itm['court_date']
     inmate['released'] = itm['released']
     inmate['holding facility'] = itm['holding_facility']
+    inmate['date generated'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
     i = i+1
 
     for c in itm['charges']:
@@ -354,7 +363,7 @@ for card in cards:
       itm['charges'] = processCharges(rows)
   inmates.append(processInmateRecord(itm, importDate))
 
-createRecentArrestsFile(inmates, backDays)
+createRecentArrestsFile(inmates, backDays, importDate)
 if useDB:
   loadToDatabase(inmates)
 
