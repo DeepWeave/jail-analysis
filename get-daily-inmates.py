@@ -311,7 +311,45 @@ def createArgParser():
   parser.add_argument('-d', '--database', type=int, help='1 to load to the database, 0 to skip')
   return parser
 
-# Main program
+def getInmateList(inputFileName):
+  file = open(inputFileName)
+  pageText = file.read()
+  file.close()
+  soup = BeautifulSoup(pageText, 'html.parser')
+
+  nms = soup.find_all("div", "p2c-card-title")
+  cards = soup.find_all("md-card", "p2c-card")
+  print('Total inmates: ', len(cards))
+  inmates = []
+  for card in cards:
+    itm = {}
+    for c1 in card.children:
+      if c1.name == 'md-card-title':
+        for c2 in c1.children:
+          if c2.name == 'md-card-title-text':
+            count = 0
+            children = list(filter(lambda r: r.name == 'div', c2.contents))
+            if 'p2c-card-title' not in children[0]['class']:
+              raise Exception('First div of title text is not the card title')
+            itm['name'] = children[0].contents[0]
+            processColumns(itm, children[2].contents)
+            processColumns(itm, children[3].contents)
+            processColumns(itm, children[4].contents)
+            processOneColumn(itm, children[5])
+            processColumns(itm, children[6].contents)
+            processOneColumn(itm, children[7])
+            processOneColumn(itm, children[8])
+      if c1.name == 'md-card-content':
+        table = c1.tbody
+        rows = list(filter(lambda r: r.name == 'tr', table.contents))
+        rows.pop(0)
+        itm['charges'] = processCharges(rows)
+    inmates.append(processInmateRecord(itm, importDate))
+  return inmates
+
+############################
+####    Main program    ####
+############################
 
 load_dotenv()
 
@@ -329,40 +367,7 @@ if args.importDate:
 
 print('Input file: ', inputFileName, ' input date: ', importDate, ', backDays = ', backDays, 'useDB = ', useDB)
 
-file = open(inputFileName)
-pageText = file.read()
-file.close()
-soup = BeautifulSoup(pageText, 'html.parser')
-
-nms = soup.find_all("div", "p2c-card-title")
-cards = soup.find_all("md-card", "p2c-card")
-print('Total inmates: ', len(cards))
-inmates = []
-for card in cards:
-  itm = {}
-  for c1 in card.children:
-    if c1.name == 'md-card-title':
-      for c2 in c1.children:
-        if c2.name == 'md-card-title-text':
-          count = 0
-          children = list(filter(lambda r: r.name == 'div', c2.contents))
-          if 'p2c-card-title' not in children[0]['class']:
-            raise Exception('First div of title text is not the card title')
-          itm['name'] = children[0].contents[0]
-          processColumns(itm, children[2].contents)
-          processColumns(itm, children[3].contents)
-          processColumns(itm, children[4].contents)
-          processOneColumn(itm, children[5])
-          processColumns(itm, children[6].contents)
-          processOneColumn(itm, children[7])
-          processOneColumn(itm, children[8])
-    if c1.name == 'md-card-content':
-      table = c1.tbody
-      rows = list(filter(lambda r: r.name == 'tr', table.contents))
-      rows.pop(0)
-      itm['charges'] = processCharges(rows)
-  inmates.append(processInmateRecord(itm, importDate))
-
+inmates = getInmateList(inputFileName)
 createRecentArrestsFile(inmates, backDays, importDate)
 if useDB:
   loadToDatabase(inmates)
