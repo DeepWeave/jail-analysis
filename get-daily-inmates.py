@@ -160,6 +160,7 @@ def createColumnFormats(sample, workbook, worksheet):
 #  print(columnFormats)
   baseFormat = workbook.add_format({'font_color': 'black', 'text_wrap':True, 'valign': 'top'})
   baseFormat.set_border(1)
+  worksheet.freeze_panes(1, 0)
   i = 0
   worksheet.set_column(i, i, 5, baseFormat) #cal
   i = i + 1
@@ -212,6 +213,7 @@ def createColumnFormats(sample, workbook, worksheet):
   d_none = workbook.add_format({'bg_color': '#c6efce'})
   g_yes = workbook.add_format({'bg_color': '#ffeb9c'})
   g_noneed = workbook.add_format({'bg_color': '#d8d8d8'})
+  g_waive = workbook.add_format({'bg_color': '#d8d8d8'})
   m_sentenced = workbook.add_format({'bg_color': '#c6efce'})
   m_nobond = workbook.add_format({'bg_color': '#ffc7ce'})
   m_support = workbook.add_format({'bg_color': '#cef0cc'})
@@ -233,6 +235,7 @@ def createColumnFormats(sample, workbook, worksheet):
   worksheet.conditional_format('D2:D1000', {'type': 'text', 'criteria': 'containing', 'value': 'none', 'format': d_none})
   worksheet.conditional_format('G2:G1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': g_yes})
   worksheet.conditional_format('G2:G1000', {'type': 'text', 'criteria': 'containing', 'value': 'no need', 'format': g_noneed})
+  worksheet.conditional_format('G2:G1000', {'type': 'text', 'criteria': 'containing', 'value': 'waive', 'format': g_waive})
   worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'sentenced', 'format': m_sentenced})
   worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'no bond', 'format': m_nobond})
   worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'support', 'format': m_support})
