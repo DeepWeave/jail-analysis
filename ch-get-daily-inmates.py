@@ -367,7 +367,7 @@ useDB = False if args.database == 0 else True
 backDays = computeBackDays(args.backDays)
 if args.importDate:
   importDate = args.importDate
-
+useDB = False
 print('Input file: ', inputFileName, ' input date: ', importDate, ', backDays = ', backDays, 'useDB = ', useDB)
 
 inmates = getInmateList(inputFileName)
