@@ -102,7 +102,7 @@ def loadEnds(ends, endDate):
 ####################################
 
 load_dotenv()
-#today = '2022-02-01'
+#today = '2022-06-26'
 today = datetime.datetime.now().strftime('%Y-%m-%d')
 yesterday = computeYesterday(today)
 print(today, yesterday)
