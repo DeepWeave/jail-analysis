@@ -295,7 +295,6 @@ def createRecentArrestsFile(inmates, backdays, importDate):
   worksheet.set_header(header)
   worksheet.print_area('A1:L10000')
 
-
   columnFormats = createColumnFormats(rows[0], workbook, worksheet)
   count = 0
   for inmate in rows:
@@ -312,6 +311,7 @@ def createArgParser():
   parser.add_argument('-i', '--importDate', help='IMPORTDATE of the form YYYY-MM-DD')
   parser.add_argument('-b', '--backDays', type=int, help='Default is 3 days on Monday, 1 day otherwise')
   parser.add_argument('-d', '--database', type=int, help='1 to load to the database, 0 to skip')
+  parser.add_argument('-a', '--arrests', type=int, help='1 to create the arrests file, 0 to skip')
   return parser
 
 def getInmateList(inputFileName):
@@ -364,6 +364,7 @@ parser = createArgParser()
 args = parser.parse_args()
 inputFileName = args.fileName
 useDB = False if args.database == 0 else True
+doArrests = False if args.arrests == 0 else True
 backDays = computeBackDays(args.backDays)
 if args.importDate:
   importDate = args.importDate
@@ -371,7 +372,8 @@ if args.importDate:
 print('Input file: ', inputFileName, ' input date: ', importDate, ', backDays = ', backDays, 'useDB = ', useDB)
 
 inmates = getInmateList(inputFileName)
-createRecentArrestsFile(inmates, backDays, importDate)
+if doArrests:
+  createRecentArrestsFile(inmates, backDays, importDate)
 if useDB:
   loadToDatabase(inmates)
 
