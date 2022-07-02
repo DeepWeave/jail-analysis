@@ -97,7 +97,7 @@ s3 = session.resource('s3')
 print('Upload daily occupants')
 object = s3.Object('on-background-data', 'buncombe-county-jail-data/daily_bcdf_occupants.csv')
 
-result = object.put(Body=open(filedir+'/daily_bcdf_occupant_charges.csv', 'rb'))
+result = object.put(Body=open(filedir+'/daily_bcdf_occupants.csv', 'rb'))
 
 res = result.get('ResponseMetadata')
 
