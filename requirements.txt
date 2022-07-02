@@ -3,7 +3,7 @@ psycopg2-binary
 python-dotenv
 xlsxwriter
 boto3
-csv
+
 
 
 
