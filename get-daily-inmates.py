@@ -68,7 +68,12 @@ def processInmateRecord(itm, importDate):
   inmate['arrested'] = val if val is None else datetime.datetime.strptime(val, '%m/%d/%Y').strftime('%Y-%m-%d')
   val = itm['court_date']
   inmate['court_date'] = val if val is None else datetime.datetime.strptime(val, '%m/%d/%Y').strftime('%Y-%m-%d')
-  val = itm['released']
+  inmate['released'] = None
+  val = None
+  if 'released' in itm:
+    val = itm['released']
+  if 'expected_release' in itm:
+    val = itm['expected_release']
   inmate['released'] = val if val is None else datetime.datetime.strptime(val, '%m/%d/%Y').strftime('%Y-%m-%d')
   inmate['primary_charge'] = itm['primary_charge'].strip()
   inmate['holding_facility'] = itm['holding_facility'].strip() if itm['holding_facility'] else None
@@ -250,6 +255,7 @@ def createRecentArrestsFile(inmates, backdays, importDate):
   today = datetime.date.today()
   days = datetime.timedelta(backdays)
   cutoffDate = today - days
+  print('Cut off date = ', cutoffDate)
   latest = list(filter(checkDate, inmates))
   print('Total arrests over past ', backdays, ' days: ', len(latest))
   pdo = ['', 'yes', 'no need', 'who knows', 'yes', 'no need']

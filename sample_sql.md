@@ -87,3 +87,39 @@ on s.defendant_id = c.defendant_id
 left join daily_inmates d
 on d.id = s.defendant_id
 where s.use_flag = 1
+
+# Count by race over time
+select date, race, group_total, total, round(100.0 * group_total/total, 2) as pct from (
+	select * from (
+		select import_date as date, race, count(name) as group_total from (
+			select import_date, name, age, gender, race from daily_inmates
+		) a
+		group by import_date, race
+	) d
+	left join (
+		select import_date, count(name) as total from (
+			select * from daily_inmates
+		) b
+		group by import_date
+	) c on date = c.import_date
+) x
+where race = 'W'
+order by date asc, race desc
+
+# Count by gender over time
+select date, gender, group_total, total, round(100.0 * group_total/total, 2) as pct from (
+	select * from (
+		select import_date as date, gender, count(name) as group_total from (
+			select import_date, name, age, gender, race from daily_inmates
+		) a
+		group by import_date, gender
+	) d
+	left join (
+		select import_date, count(name) as total from (
+			select * from daily_inmates
+		) b
+		group by import_date
+	) c on date = c.import_date
+) x
+where gender = 'F'
+order by date asc, gender desc
