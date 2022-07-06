@@ -135,13 +135,23 @@ def loadToDatabase(inmates):
 
 
 cutoffDate = None
+previousInmateMap = {}
+checkPrevious = True
 
 def checkDate(itm):
   global cutoffDate
+  global previousInmateMap
+
   val = False
   if itm['arrested']:
     iDate = datetime.datetime.strptime(itm['arrested'], '%Y-%m-%d').date()
     val =  iDate >= cutoffDate
+  if checkPrevious and not val:
+    key = itm['name'] + itm['gender'] + itm['race']
+    val = key not in previousInmateMap
+    if val:
+      print(key)
+
   return val
 
 def chargeLine(c):
@@ -320,6 +330,51 @@ def createArgParser():
   parser.add_argument('-a', '--arrests', type=int, help='1 to create the arrests file, 0 to skip')
   return parser
 
+def computeYesterday(today):
+  global cutoffDate
+  day = datetime.datetime.strptime(today, '%Y-%m-%d')
+  days = datetime.timedelta(1)
+  cutoffDate = day - days
+  return cutoffDate.strftime('%Y-%m-%d')
+
+def getPreviousInmates(today):
+  global previousInmateMap
+  yesterday = computeYesterday(today)
+  HOST = os.environ.get('JDB_HOST')
+  DBNAME = os.environ.get('JDB_NAME')
+  PASSWORD = os.environ.get('JDB_PASSWORD')
+  USER = os.environ.get('JDB_USER')
+
+  conn = psycopg2.connect(
+    host = HOST,
+    dbname = DBNAME,
+    password = PASSWORD,
+    user = USER
+  )
+  cur = conn.cursor()
+
+  print('Get inmates from yesterday: ', yesterday)
+  sql = 'select name, gender, race from jaildata.daily_inmates where (import_date = %s)'
+
+  cur.execute(sql, (yesterday,)) # Note the comma! Keeps it a tuple, apparently
+  staySet = cur.fetchall()
+  print('Entries: ', len(staySet))
+  if len(staySet) > 0:
+    name, gender, race = staySet[0]
+    print('name, gender, race')
+    print (name, gender, race)
+
+  conn.commit()
+  cur.close()
+  conn.close()
+  previousInmateMap = {}
+  for inmate in staySet:
+    name, gender, race = inmate
+    key = name + gender + race
+    previousInmateMap[key] = inmate
+  return previousInmateMap
+
+
 def getInmateList(inputFileName):
   file = open(inputFileName)
   pageText = file.read()
@@ -379,6 +434,7 @@ print('Input file: ', inputFileName, ' input date: ', importDate, ', backDays = 
 
 inmates = getInmateList(inputFileName)
 if doArrests:
+  previousInmateMap = getPreviousInmates(importDate)
   createRecentArrestsFile(inmates, backDays, importDate)
 if useDB:
   loadToDatabase(inmates)
