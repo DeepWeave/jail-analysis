@@ -73,7 +73,7 @@ daily_inmates = get_daily_occupants()
 with open(filedir+'/daily_bcdf_occupants.csv', 'w', newline='') as csvfile:
     w = csv.writer(csvfile, delimiter=',',
                             quoting=csv.QUOTE_MINIMAL)
-    w.writerow(['id', 'import_date', 'name', 'age', 'gender', 'race', 'arrested', 'primary_charge', 'total_bond'])
+    w.writerow(['id', 'import_date', 'age', 'gender', 'race', 'arrested', 'primary_charge', 'total_bond'])
     for row in daily_inmates:
       w.writerow(row)
 

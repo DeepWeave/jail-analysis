@@ -189,7 +189,7 @@ def createColumnFormats(sample, workbook, worksheet):
   i = i + 1
   worksheet.set_column(i, i, 20, baseFormat) #notes
   i = i + 1
-  worksheet.set_column(i, i, 7, baseFormat) #PDO
+  worksheet.set_column(i, i, 8, baseFormat) #PDO
   i = i + 1
   worksheet.set_column(i, i, 7, baseFormat) #Ct-date
   i = i + 1
@@ -337,9 +337,12 @@ def computeYesterday(today):
   cutoffDate = day - days
   return cutoffDate.strftime('%Y-%m-%d')
 
-def getPreviousInmates(today):
+def getPreviousInmates(backdays):
   global previousInmateMap
-  yesterday = computeYesterday(today)
+  today = datetime.date.today()
+  days = datetime.timedelta(backdays)
+  prevDate = today - days
+
   HOST = os.environ.get('JDB_HOST')
   DBNAME = os.environ.get('JDB_NAME')
   PASSWORD = os.environ.get('JDB_PASSWORD')
@@ -353,16 +356,12 @@ def getPreviousInmates(today):
   )
   cur = conn.cursor()
 
-  print('Get inmates from yesterday: ', yesterday)
+  print('Get inmates from yesterday: ', prevDate)
   sql = 'select name, gender, race from jaildata.daily_inmates where (import_date = %s)'
 
-  cur.execute(sql, (yesterday,)) # Note the comma! Keeps it a tuple, apparently
+  cur.execute(sql, (prevDate,)) # Note the comma! Keeps it a tuple, apparently
   staySet = cur.fetchall()
-  print('Entries: ', len(staySet))
-  if len(staySet) > 0:
-    name, gender, race = staySet[0]
-    print('name, gender, race')
-    print (name, gender, race)
+  print('Inmate count from yesterday: ', len(staySet))
 
   conn.commit()
   cur.close()
@@ -434,10 +433,7 @@ print('Input file: ', inputFileName, ' input date: ', importDate, ', backDays = 
 
 inmates = getInmateList(inputFileName)
 if doArrests:
-  previousInmateMap = getPreviousInmates(importDate)
+  previousInmateMap = getPreviousInmates(backDays)
   createRecentArrestsFile(inmates, backDays, importDate)
 if useDB:
   loadToDatabase(inmates)
-
-
-
