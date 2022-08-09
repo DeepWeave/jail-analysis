@@ -10,9 +10,9 @@
 
 ## Adding in new charge types
 insert into jaildata.charge_definitions (id, class, f_or_m, level, flag, estimate, not_primary_custodian, 
-										 note, charge, description, is_violent, is_dwi, is_violation, min_level, max_level, nominal_level)
+										 note, charge, description, is_violent, is_dwi, drugs, is_violation, min_level, max_level, nominal_level, vet)
 values 
-    (483, '2', 'M', 2, 0, 0, 0, '','14-286|5308|2','FALSE FIRE ALARM', 0,0,0, 2, 2, 2)
+    (483, '2', 'M', 2, 0, 0, 0, '','14-286|5308|2','FALSE FIRE ALARM', 0,0,0,0, 2, 2, 2, 1)
   ;
 -- select * from charge_definitions order by id desc
   

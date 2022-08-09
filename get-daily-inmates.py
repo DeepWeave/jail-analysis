@@ -361,7 +361,6 @@ def getPreviousInmates(backdays):
 
   cur.execute(sql, (prevDate,)) # Note the comma! Keeps it a tuple, apparently
   staySet = cur.fetchall()
-  print('Inmate count from yesterday: ', len(staySet))
 
   conn.commit()
   cur.close()
@@ -371,6 +370,8 @@ def getPreviousInmates(backdays):
     name, gender, race = inmate
     key = name + gender + race
     previousInmateMap[key] = inmate
+  
+  print('Previous inmate count: ', len(previousInmateMap))
   return previousInmateMap
 
 
