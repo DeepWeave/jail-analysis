@@ -8,6 +8,7 @@
   ) a
   where ccharge IS null or cdesc is null
 
+
 ## Adding in new charge types
 insert into jaildata.charge_definitions (id, class, f_or_m, level, flag, estimate, not_primary_custodian, 
 										 note, charge, description, is_violent, is_dwi, drugs, is_violation, min_level, max_level, nominal_level, vet)
