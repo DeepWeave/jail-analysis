@@ -7,7 +7,8 @@
     on d.charge = c.charge AND d.description = c.description
   ) a
   where ccharge IS null or cdesc is null
-
+  select count (*) from stays where end_date is null
+  select count (*) from daily_inmates where import_date = '2022-09-02'
 
 ## Adding in new charge types
 insert into jaildata.charge_definitions (id, class, f_or_m, level, flag, estimate, not_primary_custodian, 
