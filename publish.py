@@ -97,6 +97,7 @@ load_dotenv()
 
 filedir = os.environ.get('TEMP_FILE_DIRECTORY')
 
+## Daily inmates
 daily_inmates = get_daily_occupants()
 with open(filedir+'/daily_bcdf_occupants.csv', 'w', newline='') as csvfile:
     w = csv.writer(csvfile, delimiter=',',
@@ -105,15 +106,17 @@ with open(filedir+'/daily_bcdf_occupants.csv', 'w', newline='') as csvfile:
     for row in daily_inmates:
       w.writerow(row)
 
-daily_inmates = get_daily_occupant_charges()
+## Daily charges
+daily_charges = get_daily_occupant_charges()
 
 with open(filedir+'/daily_bcdf_occupant_charges.csv', 'w', newline='') as csvfile:
     w = csv.writer(csvfile, delimiter=',',
                             quoting=csv.QUOTE_MINIMAL)
     w.writerow(['defendant_id', 'charge', 'description', 'status', 'bond_type', 'bond_status', 'bond_amount'])
-    for row in daily_inmates:
+    for row in daily_charges:
       w.writerow(row)
 
+## Charge Definitions
 charge_definitions = get_charge_definitions()
 with open(filedir+'/charge_definitions.csv', 'w', newline='') as csvfile:
     w = csv.writer(csvfile, delimiter=',',
@@ -132,11 +135,8 @@ s3 = session.resource('s3')
 
 print('Upload daily occupants')
 object = s3.Object('on-background-data', 'buncombe-county-jail-data/daily_bcdf_occupants.csv')
-
 result = object.put(Body=open(filedir+'/daily_bcdf_occupants.csv', 'rb'))
-
 res = result.get('ResponseMetadata')
-
 if res.get('HTTPStatusCode') == 200:
     print('File Uploaded Successfully')
 else:
@@ -144,11 +144,8 @@ else:
 
 print('Upload daily occupant charges')
 object = s3.Object('on-background-data', 'buncombe-county-jail-data/daily_bcdf_occupant_charges.csv')
-
 result = object.put(Body=open(filedir+'/daily_bcdf_occupant_charges.csv', 'rb'))
-
 res = result.get('ResponseMetadata')
-
 if res.get('HTTPStatusCode') == 200:
     print('File Uploaded Successfully')
 else:
@@ -156,11 +153,8 @@ else:
 
 print('Upload charge definitions')
 object = s3.Object('on-background-data', 'buncombe-county-jail-data/bcdf_charge_definitions.csv')
-
 result = object.put(Body=open(filedir+'/charge_definitions.csv', 'rb'))
-
 res = result.get('ResponseMetadata')
-
 if res.get('HTTPStatusCode') == 200:
     print('File Uploaded Successfully')
 else:
