@@ -64,6 +64,34 @@ def get_daily_occupant_charges():
   
   return result
 
+def get_charge_definitions():
+  HOST = os.environ.get('JDB_HOST')
+  DBNAME = os.environ.get('JDB_NAME')
+  PASSWORD = os.environ.get('JDB_PASSWORD')
+  USER = os.environ.get('JDB_USER')
+
+  conn = psycopg2.connect(
+    host = HOST,
+    dbname = DBNAME,
+    password = PASSWORD,
+    user = USER
+  )
+  cur = conn.cursor()
+
+  sql = 'select id, charge, description, class_type, class, level, nominal_level, min_level, max_level, estimate, violent, drugs, dwi, violation, not_primary_custodian, note from jaildata.charge_definitions'
+
+  cur.execute(sql)
+  result = cur.fetchall()
+  print('Length: ', len(result))
+  if len(result) > 0:
+    print(result[0])
+
+  conn.commit()
+  cur.close()
+  conn.close()
+  
+  return result
+
 # Main Program
 load_dotenv()
 
@@ -84,6 +112,14 @@ with open(filedir+'/daily_bcdf_occupant_charges.csv', 'w', newline='') as csvfil
                             quoting=csv.QUOTE_MINIMAL)
     w.writerow(['defendant_id', 'charge', 'description', 'status', 'bond_type', 'bond_status', 'bond_amount'])
     for row in daily_inmates:
+      w.writerow(row)
+
+charge_definitions = get_charge_definitions()
+with open(filedir+'/charge_definitions.csv', 'w', newline='') as csvfile:
+    w = csv.writer(csvfile, delimiter=',',
+                            quoting=csv.QUOTE_MINIMAL)
+    w.writerow(['id', 'charge', 'description', 'class_type', 'class', 'level', 'nominal_level', 'min_level', 'max_level', 'estimate', 'violent', 'drugs', 'dwi', 'violation', 'not_primary_custodian', 'note'])
+    for row in charge_definitions:
       w.writerow(row)
 
 session = boto3.Session(
