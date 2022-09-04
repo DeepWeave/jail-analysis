@@ -153,3 +153,15 @@ if res.get('HTTPStatusCode') == 200:
     print('File Uploaded Successfully')
 else:
     print('File Not Uploaded')
+
+print('Upload charge definitions')
+object = s3.Object('on-background-data', 'buncombe-county-jail-data/bcdf_charge_definitions.csv')
+
+result = object.put(Body=open(filedir+'/charge_definitions.csv', 'rb'))
+
+res = result.get('ResponseMetadata')
+
+if res.get('HTTPStatusCode') == 200:
+    print('File Uploaded Successfully')
+else:
+    print('File Not Uploaded')
