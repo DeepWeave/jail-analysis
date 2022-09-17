@@ -8,13 +8,13 @@
   ) a
   where ccharge IS null or cdesc is null
   select count (*) from stays where end_date is null
-  select count (*) from daily_inmates where import_date = '2022-09-02'
-
+  select count (*) from daily_inmates where import_date = '2022-09-15'
 ## Adding in new charge types
-insert into jaildata.charge_definitions (id, class, f_or_m, level, flag, estimate, not_primary_custodian, 
-										 note, charge, description, is_violent, is_dwi, drugs, is_violation, min_level, max_level, nominal_level, vet)
+insert into jaildata.charge_definitions (id, class, class_type, level, estimate, not_primary_custodian, 
+										 note, charge, description, violent, dwi, drugs, violation, min_level,
+										 max_level, nominal_level, vet)
 values 
-    (483, '2', 'M', 2, 0, 0, 0, '','14-286|5308|2','FALSE FIRE ALARM', 0,0,0,0, 2, 2, 2, 1)
+    (514, '2', 'M', 2, 0, 0, '','20-7|5523|2','OPERATORS LIC VIOL', 0,0,0,0, 2, 2, 2, 1)
   ;
 -- select * from charge_definitions order by id desc
   

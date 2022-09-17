@@ -22,7 +22,7 @@ def get_daily_occupants():
   )
   cur = conn.cursor()
 
-  sql = 'select id, import_date, age, gender, race, arrested, primary_charge, total_bond from jaildata.daily_inmates'
+  sql = 'select id, encode(digest(name||race||gender, \'md5\'),\'hex\'), import_date, age, gender, race, arrested, primary_charge, total_bond from jaildata.daily_inmates'
 
   cur.execute(sql)
   result = cur.fetchall()
@@ -102,7 +102,7 @@ daily_inmates = get_daily_occupants()
 with open(filedir+'/daily_bcdf_occupants.csv', 'w', newline='') as csvfile:
     w = csv.writer(csvfile, delimiter=',',
                             quoting=csv.QUOTE_MINIMAL)
-    w.writerow(['id', 'import_date', 'age', 'gender', 'race', 'arrested', 'primary_charge', 'total_bond'])
+    w.writerow(['id', 'encrypted_name', 'import_date', 'age', 'gender', 'race', 'arrested', 'primary_charge', 'total_bond'])
     for row in daily_inmates:
       w.writerow(row)
 
@@ -125,6 +125,7 @@ with open(filedir+'/charge_definitions.csv', 'w', newline='') as csvfile:
     for row in charge_definitions:
       w.writerow(row)
 
+sys.exit()
 session = boto3.Session(
   aws_access_key_id= os.environ.get('AWS_ACCESS_KEY_ID'),
   aws_secret_access_key=os.environ.get('AWS_ACCESS_SECRET')
