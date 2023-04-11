@@ -1,20 +1,20 @@
 # Some Helpful SQL queries
 
 ## Check for new charge types:
-  select * from (
-    select distinct c.charge as ccharge, c.description as cdesc, d.charge as dcharge, d.description as ddesc from jaildata.daily_charges d
-    left outer join jaildata.charge_definitions c
-    on d.charge = c.charge AND d.description = c.description
-  ) a
-  where ccharge IS null or cdesc is null
-  select count (*) from stays where end_date is null
-  select count (*) from daily_inmates where import_date = '2022-09-15'
+    select * from (
+      select distinct c.charge as ccharge, c.description as cdesc, d.charge as dcharge, d.description as ddesc from jaildata.daily_charges d
+      left outer join jaildata.charge_definitions c
+      on d.charge = c.charge AND d.description = c.description
+    ) a
+    where ccharge IS null or cdesc is null
+    select count (*) from stays where end_date is null
+    select count (*) from daily_inmates where import_date = '2023-03-08'
 ## Adding in new charge types
 insert into jaildata.charge_definitions (id, class, class_type, level, estimate, not_primary_custodian, 
-										 note, charge, description, violent, dwi, drugs, violation, min_level,
+										 note, charge, description, violent, dwi, drugs, theft, violation, min_level,
 										 max_level, nominal_level, vet)
 values 
-    (514, '2', 'M', 2, 0, 0, '','20-7|5523|2','OPERATORS LIC VIOL', 0,0,0,0, 2, 2, 2, 1)
+    (561, '2', 'M', 2, 0, 0, '','20-7|5523|2','OPERATORS LIC VIOL', 0,0,0,0,0, 2, 2, 2, 1)
   ;
 -- select * from charge_definitions order by id desc
   
@@ -124,3 +124,22 @@ select date, gender, group_total, total, round(100.0 * group_total/total, 2) as 
 ) x
 where gender = 'F'
 order by date asc, gender desc
+
+
+# For Nolan
+select s.*, c.* from stays_summarized s
+  left join (
+select defendant_id as defendant_id2, min(rank) as min_rank, max(rank) as max_rank, count(*) as total_charges,
+string_agg(charge, E'\n') as charges,
+string_agg(description, E'\n') as descriptions,
+sum(abs(violent)) as sum_violent,
+sum(drugs) as sum_drugs,
+sum(theft) as sum_theft,
+sum(dwi) as sum_dwi, sum(violation) as sum_violation,
+sum(not_primary_custodian) as sum_not_primary_custodian,
+sum(is_pretrial) as sum_pretrial
+from daily_charges_coded
+group by defendant_id2
+  ) c
+  on s.defendant_id = c.defendant_id2 where s.rank = c.max_rank
+order by defendant_id

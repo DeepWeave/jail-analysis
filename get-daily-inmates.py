@@ -155,7 +155,10 @@ def checkDate(itm):
   return val
 
 def chargeLine(c):
-  line = c['charge'] + '; ' + c ['description'] + '; ' 
+  charge = c['charge']
+  if charge is None:
+    charge = ''
+  line = charge + '; ' + c ['description'] + '; ' 
   line += (c['status'] if c['status'] else 'None') + '; '
   line += (c['docket_number'] if c['docket_number'] else 'None') + '; '
   line += (c['bond_type'] if c['bond_type'] else '?') + '; '
@@ -298,7 +301,6 @@ def createRecentArrestsFile(inmates, backdays, importDate):
     inmate['date generated'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     i = i+1
-
     for c in itm['charges']:
       inmate['charges'] += chargeLine(c)
     rows.append(inmate)

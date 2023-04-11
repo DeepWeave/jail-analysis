@@ -101,10 +101,13 @@ def loadEnds(ends, endDate):
 # Main program
 ####################################
 
+# No records in daily_inmates for 1/28-2/1. Next set is 2/2
+
 load_dotenv()
-#today = '2022-06-26'
+#today = '2023-04-01'
 today = datetime.datetime.now().strftime('%Y-%m-%d')
 yesterday = computeYesterday(today)
+
 print(today, yesterday)
 
 # Find starting stays
