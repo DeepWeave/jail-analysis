@@ -1,1 +1,1 @@
-worker: python publish.py
+worker: python --version
