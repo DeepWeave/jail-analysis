@@ -180,6 +180,8 @@ def createColumnFormats(sample, workbook, worksheet):
   baseFormat.set_border(1)
   worksheet.freeze_panes(1, 0)
   i = 0
+  worksheet.set_column(i, i, 5, baseFormat) #pull
+  i = i + 1
   worksheet.set_column(i, i, 5, baseFormat) #cal
   i = i + 1
   worksheet.set_column(i, i, 22, baseFormat) #name
@@ -220,48 +222,52 @@ def createColumnFormats(sample, workbook, worksheet):
   i = i + 1
   worksheet.set_column(i, i, 9, baseFormat) #holding facility
 
-  a_misd = workbook.add_format({'font_color': 'lightslategray', 'bold': True})
-  a_ad1a = workbook.add_format({'font_color': '#244061', 'bold': True})
-  a_ad2b = workbook.add_format({'font_color': '#02b050', 'bold': True})
-  a_ad3b = workbook.add_format({'font_color': '#974805', 'bold': True})
-  a_9999 = workbook.add_format({'font_color': '#974805', 'bold': True})
-  a_x = workbook.add_format({'bg_color': '#DCDCDC'})
-  c_yes = workbook.add_format({'font_color': '#02b050'})
-  c_na = workbook.add_format({'bg_color': '#DCDCDC'})
-  d_none = workbook.add_format({'bg_color': '#c6efce'})
-  g_yes = workbook.add_format({'bg_color': '#ffeb9c'})
-  g_noneed = workbook.add_format({'bg_color': '#d8d8d8'})
-  g_waive = workbook.add_format({'bg_color': '#d8d8d8'})
-  m_sentenced = workbook.add_format({'bg_color': '#c6efce'})
-  m_nobond = workbook.add_format({'bg_color': '#ffc7ce'})
-  m_support = workbook.add_format({'bg_color': '#cef0cc'})
+  a_no = workbook.add_format({'bg_color': '#DCDCDC'})
+  a_yes = workbook.add_format({'bg_color': '#ffeb9c'})
+  b_misd = workbook.add_format({'font_color': 'lightslategray', 'bold': True})
+  b_ad1a = workbook.add_format({'font_color': '#244061', 'bold': True})
+  b_ad2b = workbook.add_format({'font_color': '#02b050', 'bold': True})
+  b_ad3b = workbook.add_format({'font_color': '#974805', 'bold': True})
+  b_9999 = workbook.add_format({'font_color': '#974805', 'bold': True})
+  b_x = workbook.add_format({'bg_color': '#DCDCDC'})
+  d_yes = workbook.add_format({'font_color': '#02b050'})
+  d_na = workbook.add_format({'bg_color': '#DCDCDC'})
+  e_none = workbook.add_format({'bg_color': '#c6efce'})
+  h_yes = workbook.add_format({'bg_color': '#ffeb9c'})
+  h_noneed = workbook.add_format({'bg_color': '#d8d8d8'})
+  h_waive = workbook.add_format({'bg_color': '#d8d8d8'})
+  n_sentenced = workbook.add_format({'bg_color': '#c6efce'})
+  n_nobond = workbook.add_format({'bg_color': '#ffc7ce'})
+  n_support = workbook.add_format({'bg_color': '#cef0cc'})
 
-  i_na = workbook.add_format({'bg_color': '#DCDCDC'})
-  i_xa = workbook.add_format({'bg_color': '#ffeb9c'})
-  l_no = workbook.add_format({'bg_color': '#DCDCDC'})
-  l_yes = workbook.add_format({'bg_color': '#ffeb9c'})
-  c_no = workbook.add_format({'bg_color': '#DCDCDC'})
+  j_na = workbook.add_format({'bg_color': '#DCDCDC'})
+  j_xa = workbook.add_format({'bg_color': '#ffeb9c'})
+  m_no = workbook.add_format({'bg_color': '#DCDCDC'})
+  m_yes = workbook.add_format({'bg_color': '#ffeb9c'})
+  d_no = workbook.add_format({'bg_color': '#DCDCDC'})
 
-  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"MISD"', 'format': a_misd})
-  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"AD1A"', 'format': a_ad1a})
-  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"AD2B"', 'format': a_ad2b})
-  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"AD3B"', 'format': a_ad3b})
-  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"9999"', 'format': a_9999})
-  worksheet.conditional_format('A2:A1000', {'type': 'cell', 'criteria': '==', 'value': '"x"', 'format': a_x})
-  worksheet.conditional_format('C2:C1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': c_yes})
-  worksheet.conditional_format('C2:C1000', {'type': 'text', 'criteria': 'containing', 'value': 'n/a', 'format': c_na})
-  worksheet.conditional_format('D2:D1000', {'type': 'text', 'criteria': 'containing', 'value': 'none', 'format': d_none})
-  worksheet.conditional_format('G2:G1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': g_yes})
-  worksheet.conditional_format('G2:G1000', {'type': 'text', 'criteria': 'containing', 'value': 'no need', 'format': g_noneed})
-  worksheet.conditional_format('G2:G1000', {'type': 'text', 'criteria': 'containing', 'value': 'waive', 'format': g_waive})
-  worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'sentenced', 'format': m_sentenced})
-  worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'no bond', 'format': m_nobond})
-  worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'support', 'format': m_support})
-  worksheet.conditional_format('I2:I1000', {'type': 'text', 'criteria': 'containing', 'value': 'n/a', 'format': i_na})
-  worksheet.conditional_format('I2:I1000', {'type': 'text', 'criteria': 'containing', 'value': 'xa', 'format': i_xa})
-  worksheet.conditional_format('L2:L1000', {'type': 'text', 'criteria': 'containing', 'value': 'no', 'format': l_no})
-  worksheet.conditional_format('L2:L1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': l_yes})
-  worksheet.conditional_format('C2:C1000', {'type': 'text', 'criteria': 'containing', 'value': 'no', 'format': c_no})
+  worksheet.conditional_format('A2:A1000', {'type': 'text', 'criteria': 'containing', 'value': 'no', 'format': a_no})
+  worksheet.conditional_format('A2:A1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': a_yes})
+  worksheet.conditional_format('B2:B1000', {'type': 'cell', 'criteria': '==', 'value': '"MISD"', 'format': b_misd})
+  worksheet.conditional_format('B2:B1000', {'type': 'cell', 'criteria': '==', 'value': '"AD1A"', 'format': b_ad1a})
+  worksheet.conditional_format('B2:B1000', {'type': 'cell', 'criteria': '==', 'value': '"AD2B"', 'format': b_ad2b})
+  worksheet.conditional_format('B2:B1000', {'type': 'cell', 'criteria': '==', 'value': '"AD3B"', 'format': b_ad3b})
+  worksheet.conditional_format('B2:B1000', {'type': 'cell', 'criteria': '==', 'value': '"9999"', 'format': b_9999})
+  worksheet.conditional_format('B2:B1000', {'type': 'cell', 'criteria': '==', 'value': '"x"', 'format': b_x})
+  worksheet.conditional_format('D2:D1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': d_yes})
+  worksheet.conditional_format('D2:D1000', {'type': 'text', 'criteria': 'containing', 'value': 'n/a', 'format': d_na})
+  worksheet.conditional_format('E2:E1000', {'type': 'text', 'criteria': 'containing', 'value': 'none', 'format': e_none})
+  worksheet.conditional_format('H2:H1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': h_yes})
+  worksheet.conditional_format('H2:H1000', {'type': 'text', 'criteria': 'containing', 'value': 'no need', 'format': h_noneed})
+  worksheet.conditional_format('H2:H1000', {'type': 'text', 'criteria': 'containing', 'value': 'waive', 'format': h_waive})
+  worksheet.conditional_format('N2:N1000', {'type': 'text', 'criteria': 'containing', 'value': 'sentenced', 'format': n_sentenced})
+  worksheet.conditional_format('N2:N1000', {'type': 'text', 'criteria': 'containing', 'value': 'no bond', 'format': n_nobond})
+  worksheet.conditional_format('N2:N1000', {'type': 'text', 'criteria': 'containing', 'value': 'support', 'format': n_support})
+  worksheet.conditional_format('J2:J1000', {'type': 'text', 'criteria': 'containing', 'value': 'n/a', 'format': j_na})
+  worksheet.conditional_format('J2:J1000', {'type': 'text', 'criteria': 'containing', 'value': 'xa', 'format': j_xa})
+  worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'no', 'format': m_no})
+  worksheet.conditional_format('M2:M1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': m_yes})
+  worksheet.conditional_format('D2:D1000', {'type': 'text', 'criteria': 'containing', 'value': 'no', 'format': d_no})
   
 def createRecentArrestsFile(inmates, backdays, importDate):
   global cutoffDate
@@ -272,12 +278,10 @@ def createRecentArrestsFile(inmates, backdays, importDate):
   latest = list(filter(checkDate, inmates))
   print('Total arrests over past ', backdays, ' days: ', len(latest))
   pdo = ['', 'yes', 'no need', 'who knows', 'yes', 'no need']
-  i = 0
   rows = []
   for itm in latest:
     inmate = {}
-    if (i > 4):
-      i = 0
+    inmate['pull?'] = None
     inmate['cal'] = None
     inmate['name'] = itm['name']
     inmate['ADMN'] = None
@@ -300,18 +304,17 @@ def createRecentArrestsFile(inmates, backdays, importDate):
     inmate['holding facility'] = itm['holding_facility']
     inmate['date generated'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    i = i+1
     for c in itm['charges']:
       inmate['charges'] += chargeLine(c)
     rows.append(inmate)
-  prefix = 'latest_arrests-' + str(backDays) + 'day-'
-  workbook = xlsxwriter.Workbook(prefix + today.strftime('%Y-%m-%d') + '.xlsx')
+  prefix = '-latest_arrests-ej-' + str(backDays) + 'day'
+  workbook = xlsxwriter.Workbook(today.strftime('%Y-%m-%d') + prefix + '.xlsx')
   worksheet = workbook.add_worksheet()
   header = '&LPage &P of &N' + '&CFIRST APP - ' + today.strftime('%Y-%m-%d')
 
   worksheet.set_landscape()
   worksheet.set_header(header)
-  worksheet.print_area('A1:L10000')
+  worksheet.print_area('A1:M10000')
 
   columnFormats = createColumnFormats(rows[0], workbook, worksheet)
   count = 0
