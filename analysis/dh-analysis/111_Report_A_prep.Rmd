@@ -1,0 +1,439 @@
+---
+title: "Buncombe Jail EJ Stays Preparation"
+author: "DIH"
+date: "2023-08-07"
+output: html_document
+params:
+  MAKE_BASE_FILES: FALSE
+  READ_BASE_FILES: FALSE
+  MAKE_STAY_SUMM: TRUE
+  READ_STAY_SUMM: FALSE
+  MAKE_FILES: TRUE
+  READ_FILES: FALSE
+  SHOW_SCRIPT: FALSE
+  SHOW_STR: FALSE
+---
+
+```{r, setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+# Ref:
+# from console create script of all R chunks
+# knitr::purl(input="Report_A_all_dates.Rmd", output="Report_A_all_dates_script.r", documentation=0)
+```
+
+<!-- This program performs data preparation, reading and writing (to RData files) the files needed for reports. Some csv and zip files are also written. Directory paths, as well as FILE_DATE, are located in the .Rprofile file so that they will be universally available.\n
+
+The execution of the steps in this Rmd file are determined by the params at the head of this file. This allows a minimal number of reads and writes depending on what tasks are to be carried out.-->
+
+
+```{r, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+# essential file
+load(file=paste0(RDataPath,"functions.RData"))
+```
+Group texts:  
+```{r group_txt, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+Group_txt <- c("Week or less","8 to 30 days","31 to 90 days","Over 90 days","Ambig.")
+#
+save(Group_txt,file=paste0(RDataPath,"Group_txt.RData"))
+```
+
+Stays:  
+```{r read_stays, eval=params$MAKE_BASE_FILES, echo=params$MAKE_FILES}
+df_inmate_stays_0 <- readr::read_csv(paste0(csvPath,"stays-",FILE_DATE,".csv"))
+#
+df_inmate_stays <- 
+  df_inmate_stays_0  %>%
+	dplyr::mutate(
+		end_date = as.Date(end_date, format = "%Y-%m-%d")
+	) %>% 
+	dplyr::filter(
+		use_flag == 1
+	)  %>%
+	dplyr::select(
+		-note,
+		-use_flag
+	)
+#
+save(df_inmate_stays_0, file=paste0(RDataPath,"df_inmate_stays_0.RData"))
+rm(df_inmate_stays_0)
+save(df_inmate_stays, file=paste0(RDataPath,"df_inmate_stays.RData"))
+```
+```{r, eval=params$READ_BASE_FILES, echo=params$READ_FILES}
+load(file=paste0(RDataPath,"df_inmate_stays.RData"))
+```
+```{r, eval=params$SHOW_STR, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+# df_inmate_stays
+str(df_inmate_stays, vec.len=1, give.attr=FALSE)
+```
+
+Charge definitions (must be available):  
+```{r read_charge_defs, eval=params$MAKE_BASE_FILES, echo=params$MAKE_FILES}
+df_charge_def_0 <- readr::read_csv(paste0(csvPath,"charge_definitions-",FILE_DATE,".csv")) %>%
+  dplyr::rename(
+    charge_def_id = id
+  )
+# avoid tampering with date datatype colums
+df_charge_def <- 
+  df_charge_def_0 %>% 
+    dplyr::mutate_if(
+      ~ is.numeric(.) | is.character(.),
+      list(~na_if(.,"NULL"))
+  )
+#
+save(df_charge_def_0, file=paste0(RDataPath,"df_charge_def_0.RData"))
+rm(df_charge_def_0)
+save(df_charge_def, file=paste0(RDataPath,"df_charge_def.RData"))
+```
+```{r, echo=params$READ_FILES}
+# must be available
+load(file=paste0(RDataPath,"df_charge_def.RData"))
+```
+```{r, eval=params$SHOW_STR, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+# df_charge_def
+str(df_charge_def, vec.len=1, give.attr=FALSE)
+```
+  
+Daily Charges:  
+```{r read_daily_charges, eval=params$MAKE_BASE_FILES, echo=params$MAKE_FILES}
+df_daily_charges_0 <- readr::read_csv(paste0(csvPath,"daily_charges-",FILE_DATE,".csv"))
+#
+df_daily_charges_0 %>% reshape2::dcast(bond_type ~ .)
+nrow(df_daily_charges_0 %>% dplyr::filter(docket_number == "NULL"))
+df_daily_charges <- 
+  df_daily_charges_0 %>% 
+    dplyr::mutate_if(
+      ~ is.numeric(.) | is.character(.),
+      list(~na_if(.,"NULL"))
+	) %>%
+	dplyr::mutate(
+		bond_amount = round(bond_amount/100)
+	)
+	
+df_daily_charges %>% reshape2::dcast(bond_type ~ .)
+nrow(df_daily_charges %>% dplyr::filter(docket_number == "NULL"))
+#
+save(df_daily_charges_0, file=paste0(RDataPath,"df_daily_charges_0.RData"))
+rm(df_daily_charges_0)
+save(df_daily_charges, file=paste0(RDataPath,"df_daily_charges.RData"))
+```
+```{r, eval=params$READ_BASE_FILES, echo=params$READ_FILES}
+load(file=paste0(RDataPath,"df_daily_charges.RData"))
+```
+```{r, eval=params$SHOW_STR, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+# df_daily_charges
+str(df_daily_charges, vec.len=1, give.attr=FALSE)
+```
+
+Daily inmates:  
+```{r read_daily_inmates, eval=params$MAKE_BASE_FILES, echo=params$MAKE_FILES}
+df_daily_inmates_0 <- readr::read_csv(paste0(csvPath,"daily_inmates-",FILE_DATE,".csv")) %>%
+  dplyr::rename(
+    defendant_id = id
+  )
+#
+df_daily_inmates <- 
+  df_daily_inmates_0 %>% 
+    dplyr::mutate_if(
+      ~ is.numeric(.) | is.character(.),
+      list(~na_if(.,"NULL"))
+	) %>%
+  dplyr::mutate(
+	holding_facility = ifelse(is.na(holding_facility), "UNKNOWN", holding_facility)
+  )
+#
+# holding_facility counts:
+df_daily_inmates %>% 
+	reshape2::dcast(holding_facility ~ .)
+#
+# check on dups:
+nrow(df_daily_inmates %>%  
+	dplyr::group_by(
+		import_date,
+		defendant_id
+	) %>% 
+	dplyr::count() %>% 
+	dplyr::filter(n>1)
+)
+#
+save(df_daily_inmates_0, file=paste0(RDataPath,"df_daily_inmates_0.RData"))
+rm(df_daily_inmates_0)
+save(df_daily_inmates, file=paste0(RDataPath,"df_daily_inmates.RData"))
+```
+```{r, eval=params$READ_BASE_FILES, echo=params$READ_FILES}
+load(file=paste0(RDataPath,"df_daily_inmates.RData"))
+```
+```{r, eval=params$SHOW_STR, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+# df_daily_inmates
+str(df_daily_inmates, vec.len=1, give.attr=FALSE)
+```
+  
+### Stays Summarized  
+
+Eric email 7/16/2023  
+
+Here is a file with a summary of all stays:  
+
+2023-07-16-all_stays_summarized.csv  
+
+There's a quick summary of the columns below.  
+
+For most of my analyses I use all completed stays (i.e., end_date is not null) where is_pretrial = 1 and not_primary_custodian = 0 (and use_flag = 1, but I've already filtered out the ones with 0s).  
+
+defendant_id: this corresponds to the id of the defendant in daily_inmates on the first day of their stay  
+name: recorded name  
+gender: recorded gender  
+race: recorded race  
+start_date: first day of jail incarceration  
+end_date: last day of jail incarceration or null if they are still there as of today  
+days: total number of days they've been in (minimum 1)  
+max_level: highest level of charge they face (0 - 14)  
+is_pretrial: this is 1 if all charges are pre-trial  
+violent: this is 1 if any charges are violent  
+dwi: this is 1 if any charges are dwi-related  
+drugs: this is 1 if any charges are drug-related  
+not_primary_custodian: this is 1 if Buncombe County is not the primary custodian (e.g., they are being held for the feds, on a child support purge, or for another county). If 1, then Buncombe County has no ability to release them.  
+violation: this is 1 if there are any pretrial or probation violations  
+use_flag: always 1 so just ignore. I already filtered out the ones that should not be used.  
+  
+7/19/2023 DIH  
+Add holding_facility that matches defendant_id  
+  
+7/24/2023 Eric Jackson email:  
+In other words, anyone in jail with max_level 0 has something odd going on and is not our primary interest. And I would always throw out anyone with is_pretrial = 0 and not_primary_custodian = 1: they're not relevant to our analysis since they're not eligible for release. (Meaning to exclude records whenever max_level=0 OR is_pretrial=0 or not_primary_custodian=1.)
+  
+nrow(df_inmate_stays_summ %>% dplyr::filter(is_pretrial==0 & not_primary_custodian==1)) -> 302 for 2023-07-16-all_stays_summarized.csv  
+  
+7/30/2023 from Eric Jackson  
+  
+Ok, it shouldn't make a huge difference, but I have a new file 2023-07-30-all-stays-summarized.csv in this folder. You can swap in for the other, or not worry about it for now.  
+  
+I have done 2 things:  
+I made the use_flag 0 for all stays that began during the 2 periods when I wasn't able to download and process the jail website myself, one at the end of January and one at the end of May.. Stays that carried through or ended during that period are unaffected. That removed a total of 258 stays from the dataset. We still need to be careful about interpreting time series around those dates, but the impact on stays stats overall should be minimal.  
+  
+I changed the coding of the "PRETRIAL RELEASE VIOLATION [15A-534(F)]" charge to no longer have the violation flag - all those with violation=1 are now probation or parole violations. If we filter violation = 1 out, the number of people with max_level = 0 is reduced. I think something under half of those are pretrial violations, so at some point I'll want to dig into the others.  
+
+
+```{r read_all_stays_summarized, eval=params$MAKE_STAY_SUMM, echo=params$MAKE_FILES}
+# df_inmate_stays_summ_0 <- readr::read_csv(paste0(csvPath,"2023-07-16-all_stays_summarized.csv")) 
+# nrow(df_inmate_stays_summ_0)
+# 8076
+# nrow()
+# 5391
+# replaced 7/30/2023
+#
+df_inmate_stays_summ_0 <- readr::read_csv(paste0(csvPath,"2023-07-30-all-stays-summarized.csv")) 
+#
+nrow(df_inmate_stays_summ_0)
+# 8013
+#
+# reject if is_pretrial==0 or not_primary_custodian==1 or max_level=0
+#
+df_inmate_stays_summ <- 
+  df_inmate_stays_summ_0 %>% 
+	dplyr::filter(
+		!(is_pretrial==0 | not_primary_custodian==1 | max_level==0 | violation==1)
+	) %>%
+	dplyr::select(
+		-use_flag
+	) %>%
+	dplyr::rename(
+		stay = days
+	) %>%
+	dplyr::mutate(
+		end_date = as.Date(end_date, format = "%Y-%m-%d")
+	)
+#
+nrow(df_inmate_stays_summ)
+# 5120
+#
+save(df_inmate_stays_summ_0, file=paste0(RDataPath,"df_inmate_stays_summ_0.RData"))
+save(df_inmate_stays_summ, file=paste0(RDataPath,"df_inmate_stays_summ.RData"))
+```
+```{r, eval=params$READ_STAY_SUMM, echo=params$READ_FILES}
+load(file=paste0(RDataPath,"df_inmate_stays_summ.RData"))
+```
+```{r, eval=params$SHOW_STR, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+# df_inmate_stays_summ
+str(df_inmate_stays_summ, vec.len=1, give.attr=FALSE)
+```
+  
+df_inmate_stays_summ %>% reshape2::dcast(max_level ~ .)  
+   max_level    .  
+1          1 389  
+2          2 753  
+3          3 855  
+4          4 809  
+5          5 633  
+6          6 951  
+7          7 107  
+8          8 149  
+9          9  72  
+10        10  69  
+11        11 258  
+12        12  46  
+13        13  18  
+14        14  11  
+  
+```{r, eval=params$MAKE_STAY_SUMM, echo=params$SHOW_SCRIPT, message=FALSE, warning=FALSE}
+#
+# THIS IS WHERE CURRENT_DATES IS CREATED AND SAVED
+#
+CURRENT_DATES <- sort(unique(df_inmate_stays_summ$start_date))
+#
+save(CURRENT_DATES, file=paste0(RDataPath,"CURRENT_DATES.RData"))
+```
+
+### Check for Missing Days  
+  
+```{r df_check_daily_inmates, eval=params$MAKE_BASE_FILES, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+df_check_daily_inmates <- 
+	df_daily_inmates %>% 
+	dplyr::distinct(
+		import_date
+	) %>%
+	dplyr::mutate(
+		mon=format(as.Date(import_date,origin="1970-01-01"),"%m"),
+		yr=format(as.Date(import_date,origin="1970-01-01"),"%Y")
+	)
+#
+df_check_daily_inmates %>% 
+	reshape2::dcast( mon ~ yr )
+```
+
+```{r df_stay_by_day, eval=params$MAKE_FILES, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+df_stay_by_day <- fn_compute_stay_by_day(df_inmate_stays_summ)
+save(df_stay_by_day, file=paste0(RDataPath,"df_stay_by_day.RData"))
+```
+
+```{r df_stay_by_day_melt, eval=params$MAKE_FILES, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+df_stay_by_day_melt <- fn_stay_by_day_melt(df_stay_by_day)
+save(df_stay_by_day_melt, file=paste0(RDataPath,"df_stay_by_day_melt.RData"))
+```
+
+```{r df_stay_by_day_melt_bins, eval=params$MAKE_FILES, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+df_stay_by_day_melt_bins <- fn_stay_by_day_melt_bins(df_stay_by_day_melt)
+save(df_stay_by_day_melt_bins, file=paste0(RDataPath,"df_stay_by_day_melt_bins.RData"))
+names(df_stay_by_day_melt_bins)
+# [1] "as_of_date" "bin1"       "bin2"       "bin3"       "bin4"       "N"         
+# [7] "pct1"       "pct2"       "pct3"       "pct4" 
+```
+
+Melt summary data as pct  
+```{r df_pct_bins_stay_by_day_melt, eval=params$MAKE_FILES, echo=params$MAKE_FILES}
+# df_pct_bins_stay_by_day_melt
+
+df_pct_bins_stay_by_day_melt <- fn_pct_bins_stay_by_day_melt(df_stay_by_day_melt_bins)
+save(df_pct_bins_stay_by_day_melt, file=paste0(RDataPath,"df_pct_bins_stay_by_day_melt.RData"))
+#
+readr::write_csv(df_pct_bins_stay_by_day_melt, "df_pct_bins_stay_by_day_melt.csv", col_names=TRUE)
+zip(paste0(RDataPath,"df_pct_bins_stay_by_day_melt_",FILE_DATE,".zip"), "df_pct_bins_stay_by_day_melt.csv")
+```
+```{r, eval=params$READ_FILES, echo=params$READ_FILES}
+# verify existence
+load(file=paste0(RDataPath,"df_pct_bins_stay_by_day_melt.RData"))
+```
+
+Melt summary data as N  
+```{r df_N_bins_stay_by_day_melt, eval=params$MAKE_FILES, echo=params$MAKE_FILES}
+# df_N_bins_stay_by_day_melt
+
+df_N_bins_stay_by_day_melt <- fn_N_bins_stay_by_day_melt(df_stay_by_day_melt_bins)
+save(df_N_bins_stay_by_day_melt, file=paste0(RDataPath,"df_N_bins_stay_by_day_melt.RData"))
+#
+readr::write_csv(df_N_bins_stay_by_day_melt, "df_N_bins_stay_by_day_melt.csv", col_names=TRUE)
+zip(paste0(RDataPath,"df_N_bins_stay_by_day_melt_",FILE_DATE,".zip"), "df_N_bins_stay_by_day_melt.csv")
+```
+```{r, eval=params$READ_FILES, echo=params$READ_FILES}
+# verify existence
+load(file=paste0(RDataPath,"df_N_bins_stay_by_day_melt.RData"))
+```
+  
+### Misdemeanors and felonies:  
+  
+```{r df_stay_by_day_ml_M, eval=params$MAKE_FILES, echo=params$MAKE_FILES}
+df_stay_by_day_ml_M <- fn_stay_by_day_ml_MF(df_inmate_stays_summ, c(1:4))
+save(df_stay_by_day_ml_M, file=paste0(RDataPath,"df_stay_by_day_ml_M.RData"))
+```
+```{r, eval=params$READ_FILES, echo=params$READ_FILES}
+# verify existence
+load(file=paste0(RDataPath,"df_stay_by_day_ml_M.RData"))
+```
+
+```{r df_stay_by_day_ml_F, eval=params$MAKE_FILES, echo=params$MAKE_FILES}
+df_stay_by_day_ml_F <- fn_stay_by_day_ml_MF(df_inmate_stays_summ, c(5:14))
+save(df_stay_by_day_ml_F, file=paste0(RDataPath,"df_stay_by_day_ml_F.RData"))
+```
+```{r, eval=params$READ_FILES, echo=params$READ_FILES}
+# verify existence
+load(file=paste0(RDataPath,"df_stay_by_day_ml_F.RData"))
+```
+
+
+```{r df_stay_by_day_melt_ml_M, eval=params$MAKE_FILES, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+df_stay_by_day_melt_ml_M <- fn_stay_by_day_melt(df_stay_by_day_ml_M)
+save(df_stay_by_day_melt_ml_M, file=paste0(RDataPath,"df_stay_by_day_melt_ml_M.RData"))
+```
+```{r df_stay_by_day_melt_ml_F, eval=params$MAKE_FILES, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+df_stay_by_day_melt_ml_F <- fn_stay_by_day_melt(df_stay_by_day_ml_F)
+save(df_stay_by_day_melt_ml_F, file=paste0(RDataPath,"df_stay_by_day_melt_ml_F.RData"))
+```
+
+```{r df_stay_by_day_melt_bins_ml_M, eval=params$MAKE_FILES, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+df_stay_by_day_melt_bins_ml_M <- fn_stay_by_day_melt_bins(df_stay_by_day_melt_ml_M)
+save(df_stay_by_day_melt_bins_ml_M, file=paste0(RDataPath,"df_stay_by_day_melt_bins_ml_M.RData"))
+```
+```{r df_stay_by_day_melt_bins_ml_F, eval=params$MAKE_FILES, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+df_stay_by_day_melt_bins_ml_F <- fn_stay_by_day_melt_bins(df_stay_by_day_melt_ml_F)
+save(df_stay_by_day_melt_bins_ml_F, file=paste0(RDataPath,"df_stay_by_day_melt_bins_ml_F.RData"))
+```
+
+Melt summary data as pct  
+```{r df_pct_bins_stay_by_day_melt_ml_M, eval=params$MAKE_FILES, echo=params$MAKE_FILES}
+df_pct_bins_stay_by_day_melt_ml_M <- fn_pct_bins_stay_by_day_melt(df_stay_by_day_melt_bins_ml_M)
+save(df_pct_bins_stay_by_day_melt_ml_M, file=paste0(RDataPath,"df_pct_bins_stay_by_day_melt_ml_M.RData"))
+#
+readr::write_csv(df_pct_bins_stay_by_day_melt_ml_M, "df_pct_bins_stay_by_day_melt_ml_M.csv", col_names=TRUE)
+zip(paste0(RDataPath,"df_pct_bins_stay_by_day_melt_ml_M_",FILE_DATE,".zip"), "df_pct_bins_stay_by_day_melt_ml_M.csv")
+```
+```{r, eval=params$READ_FILES, echo=params$READ_FILES}
+# verify existence
+load(file=paste0(RDataPath,"df_pct_bins_stay_by_day_melt_ml_M.RData"))
+```
+```{r df_pct_bins_stay_by_day_melt_ml_F, eval=params$MAKE_FILES, echo=params$MAKE_FILES}
+df_pct_bins_stay_by_day_melt_ml_F <- fn_pct_bins_stay_by_day_melt(df_stay_by_day_melt_bins_ml_F)
+save(df_pct_bins_stay_by_day_melt_ml_F, file=paste0(RDataPath,"df_pct_bins_stay_by_day_melt_ml_F.RData"))
+#
+readr::write_csv(df_pct_bins_stay_by_day_melt_ml_F, "df_pct_bins_stay_by_day_melt_ml_F.csv", col_names=TRUE)
+zip(paste0(RDataPath,"df_pct_bins_stay_by_day_melt_ml_F_",FILE_DATE,".zip"), "df_pct_bins_stay_by_day_melt_ml_F.csv")
+```
+```{r, eval=params$READ_FILES, echo=params$READ_FILES}
+# verify existence
+load(file=paste0(RDataPath,"df_pct_bins_stay_by_day_melt_ml_F.RData"))
+```
+
+Melt summary data as N  
+```{r df_N_bins_stay_by_day_melt_ml_M, eval=params$MAKE_FILES, echo=params$MAKE_FILES}
+df_N_bins_stay_by_day_melt_ml_M <- fn_N_bins_stay_by_day_melt(df_stay_by_day_melt_bins_ml_M)
+save(df_N_bins_stay_by_day_melt_ml_M, file=paste0(RDataPath,"df_N_bins_stay_by_day_melt_ml_M.RData"))
+#
+readr::write_csv(df_N_bins_stay_by_day_melt_ml_M, "df_N_bins_stay_by_day_melt_ml_M.csv", col_names=TRUE)
+zip(paste0(RDataPath,"df_N_bins_stay_by_day_melt_ml_M_",FILE_DATE,".zip"), "df_N_bins_stay_by_day_melt_ml_M.csv")
+```
+```{r, eval=params$READ_FILES, echo=params$READ_FILES}
+# verify existence
+load(file=paste0(RDataPath,"df_N_bins_stay_by_day_melt_ml_M.RData"))
+```
+```{r df_N_bins_stay_by_day_melt_ml_F, eval=params$MAKE_FILES, echo=params$MAKE_FILES}
+df_N_bins_stay_by_day_melt_ml_F <- fn_N_bins_stay_by_day_melt(df_stay_by_day_melt_bins_ml_F)
+save(df_N_bins_stay_by_day_melt_ml_F, file=paste0(RDataPath,"df_N_bins_stay_by_day_melt_ml_F.RData"))
+#
+readr::write_csv(df_N_bins_stay_by_day_melt_ml_F, "df_N_bins_stay_by_day_melt_ml_F.csv", col_names=TRUE)
+zip(paste0(RDataPath,"df_N_bins_stay_by_day_melt_ml_F_",FILE_DATE,".zip"), "df_N_bins_stay_by_day_melt_ml_F.csv")
+```
+```{r, eval=params$READ_FILES, echo=params$READ_FILES}
+# verify existence
+load(file=paste0(RDataPath,"df_N_bins_stay_by_day_melt_ml_F.RData"))
+```
+

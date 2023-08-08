@@ -1,0 +1,1056 @@
+---
+title: "Buncombe Jail Length of Stay - Functions"
+author: "DIH"
+date: "2023-08-07"
+output: html_document
+params:
+  SHOW_SCRIPT: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, echo=FALSE}
+# Ref:
+# from console create script of all R chunks
+# knitr::purl(input="Report_A_all_dates.Rmd", output="Report_A_all_dates_script.r", documentation=0)
+# https://stackoverflow.com/questions/71100718/add-labels-to-pie-chart-ggplot2-after-specifying-factor-orders
+# https://dethwench.com/pie-chart-ggplot-style-is-suprisingly-hard/
+#
+# to get grouping:
+# <dataframe> %>% dplyr::group_vars()
+```
+  
+<!-- This file contains only functions. It produces one file, functions.RData, which must be read by other programs. -->
+  
+```{r}
+check_exists <- function(check_){
+	# check to see if function name already in use
+	if (check_ %in% name_list){
+		print(paste("ERROR:",check_,"already exists."))
+		knitr::knit_exit()
+	} else {
+		name_list <- c(name_list, check_)
+	}
+	#
+	return(name_list)
+}
+```
+		
+```{r fn_make_pct_stay_plot}
+# This shows the percent stay moving across the data. Later dates are biased due to data loss due to future events (that, of course, have not yet happened).  
+#
+# https://stackoverflow.com/questions/5388832/how-to-get-a-vertical-geom-vline-to-an-x-axis-of-class-date
+# https://stackoverflow.com/questions/47901792/annotate-with-ggplot2-when-axis-is-of-class-date
+# break in y-axis
+
+# https://cran.r-project.org/web/packages/ggbreak/vignettes/ggbreak.html
+# https://github.com/YuLab-SMU/supplemental-ggbreak/blob/main/Rmarkdown/supplementary.Rmd
+#
+fn_make_pct_stay_plot <- function(df_moving_, title_hdr_, cutoff_=100){
+	df_moving_ %>%
+		dplyr::filter(
+			any(stringr::str_detect(Group, Group_txt[1:4]))
+		) %>%
+		dplyr::select(
+			as_of_date,
+			Group,
+			pct
+		) %>%
+		dplyr::mutate(
+			Group=factor(Group,levels=c(Group_txt[1:4]))
+		) %>%
+		ggplot( aes( x = as_of_date, y = pct, color = Group ) ) +
+		geom_point() +
+		geom_smooth(method = "loess", fill = NA) +
+		ylim(0,cutoff_)+
+		labs( 
+			x = "As-Of Date", 
+			y = "Percent of Stay", 
+			title = paste(title_hdr_,"Percent Length of Stay Buncombe County Jail Inmates",FILE_DATE,"Data"),
+			subtitle = ifelse(cutoff_==100,"",paste0("Vertical Axis Cutoff at ",cutoff_,"%")),
+			color = NULL
+		) +
+		scale_color_discrete(
+			labels = c(Group_txt[1:4])
+		) +
+		theme( 
+			axis.text.x = element_text(angle=60, hjust=1), 
+			plot.title = element_text(hjust = 0.5),
+			plot.subtitle = element_text(hjust = 0.5),
+			legend.position = "top"
+		) +
+		scale_x_date(date_breaks = "months", date_labels = "%d-%m-%Y") 
+		#
+		# default return
+		#
+}
+```
+```{r, echo=FALSE}
+name_list <- "fn_make_pct_stay_plot"
+```
+```{r fn_make_N_stay_plot}
+fn_make_N_stay_plot <- function(df_moving, title_hdr_){
+	df_moving %>%
+		dplyr::filter(
+			any(stringr::str_detect(Group, Group_txt[1:4]))
+		) %>%
+		dplyr::select(
+			as_of_date,
+			Group,
+			N
+		) %>%
+		dplyr::mutate(
+			Group = factor(Group, levels=c(Group_txt[4:1]))
+		) %>%
+		ggplot( aes( x = as_of_date, y = N ) ) +
+		geom_point(size=0.5) +
+		facet_wrap(
+			vars(Group), 
+			ncol=1, 
+			strip.position="bottom"
+		) +
+		labs( 
+			x = "As-Of Date", 
+			title = paste(title_hdr_,"Length of Stay Buncombe County Jail Inmates",FILE_DATE,"Data")
+		) +
+		theme( 
+			axis.text.x = element_text(angle=60, hjust=1), 
+			plot.title = element_text(hjust = 0.5),
+			plot.subtitle = element_text(hjust = 0.5),
+			legend.position = "top"
+		) +
+		scale_x_date(date_breaks = "months", date_labels = "%d-%m-%Y") 
+		#
+		# default return
+		#
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_make_N_stay_plot")
+```
+```{r fn_make_pct_stay_plot_one_up}
+fn_make_pct_stay_plot_one_up <- function(df_moving_, select_group_, cutoff_=100){
+	# select_group_ is the index of the item in Group_txt
+	df_moving_ %>%
+		dplyr::filter(
+			Group == Group_txt[select_group_]
+		) %>%
+		dplyr::select(
+			as_of_date,
+			Group,
+			pct
+		) %>%
+		ggplot( aes( x = as_of_date, y = pct) ) +
+		geom_point() +
+		geom_smooth(method = "loess", fill = NA) +
+		ylim(0,cutoff_) +
+		labs( 
+			x = "As-Of Date", 
+			y = "Percent of Stay", 
+			title = paste(Group_txt[select_group_],"Percent Length of Stay",FILE_DATE,"Data"),
+			subtitle = ifelse(cutoff_==100,"",paste0("Vertical Axis Cutoff at ",cutoff_,"%")),
+			color = NULL
+		) +
+		theme( 
+			axis.text.x = element_text(angle=60, hjust=1), 
+			plot.title = element_text(hjust = 0.5),
+			plot.subtitle = element_text(hjust = 0.5),
+			legend.position = "none"
+		) +
+		scale_x_date(date_breaks = "months", date_labels = "%d-%m-%Y") 
+		#
+		# default return
+		#
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_make_pct_stay_plot_one_up")
+```
+```{r fn_make_N_stay_plot_one_up}
+fn_make_N_stay_plot_one_up <- function(df_moving_, cutoff_, select_group_, which_offense_){
+	# select_group_ is the index of the item in Group_txt
+	df_moving_ %>%
+		dplyr::filter(
+			Group == Group_txt[select_group_]
+		) %>%
+		dplyr::select(
+			as_of_date,
+			Group,
+			N
+		) %>%
+		ggplot( aes( x = as_of_date, y = N) ) +
+		geom_point() +
+		geom_smooth(method = "loess", fill = NA) +
+		ylim(0,cutoff_) +
+		labs( 
+			x = "As-Of Date", 
+			y = "Number of Inmates", 
+			title = paste(which_offense_,Group_txt[select_group_],FILE_DATE,"Data"),
+			color = NULL
+		) +
+		theme( 
+			axis.text.x = element_text(angle=60, hjust=1), 
+			plot.title = element_text(hjust = 0.5),
+			plot.subtitle = element_text(hjust = 0.5),
+			legend.position = "none"
+		) +
+		scale_x_date(date_breaks = "months", date_labels = "%d-%m-%Y") 
+		#
+		# default return
+		#
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_make_N_stay_plot_one_up")
+```
+```{r fn_inmates_overall}
+# this finds the df_daily_inmates record with the earliest import date
+fn_inmates_overall <- function(df_daily_inmates_){
+	df_inmates_overall_ <- 
+		df_daily_inmates_ %>% 
+			dplyr::select(
+				import_date,
+				name,
+				arrested
+			) %>% 
+			dplyr::group_by(
+				name,
+				arrested
+			) %>% 
+			dplyr::summarise(
+				max_import_date = max(import_date),
+				min_import_date = min(import_date)
+			) %>% 
+			dplyr::ungroup() %>% 
+			dplyr::mutate(
+				stay = max_import_date - min_import_date + 1
+			)
+#
+	return(df_inmates_overall_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_inmates_overall")
+```
+```{r fn_inmates_overall_supp}
+# this extends to include useful ancillary items
+fn_inmates_overall_supp <- function(df_inmates_overall_,df_daily_inmates_){
+	df_inmates_overall_supp_ <- 
+		dplyr:::left_join(
+			df_inmates_overall_,
+			df_daily_inmates_,
+			by=c(
+				"min_import_date"="import_date",
+				"name",
+				"arrested"
+			)
+		) %>%
+		dplyr::rename(
+			import_date = min_import_date
+		) %>%
+		dplyr::select(
+			defendant_id,
+			import_date,
+			name,
+			arrested,
+			max_import_date,
+			stay,
+			race,
+			gender,
+			age,
+			total_bond
+		)
+	#
+	return(df_inmates_overall_supp_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_inmates_overall_supp")
+```
+```{r fn_inmates_overall_arr}
+fn_inmates_overall_arr <- function(df_daily_inmates_){
+	# this finds the df_daily_inmates record with the earliest import date
+	df_inmates_overall_arr_ <- 
+		df_daily_inmates_ %>% 
+			dplyr::select(
+				import_date,
+				name,
+				arrested
+			) %>% 
+			dplyr::group_by(
+				name,
+				arrested
+			) %>% 
+			dplyr::summarise(
+				max_import_date = max(import_date),
+				min_import_date = min(import_date)
+			) %>% 
+			dplyr::ungroup() %>% 
+			dplyr::mutate(
+				min_import_date_hold = min_import_date,
+				min_import_date = as.Date(ifelse(arrested < min_import_date, arrested, min_import_date),"1970-01-01"),
+				stay = max_import_date - min_import_date + 1
+			)
+	#
+	return(df_inmates_overall_arr_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_inmates_overall_arr")
+```
+```{r fn_inmates_overall_arr_supp}
+fn_inmates_overall_arr_supp <- function(df_inmates_overall_arr_,df_daily_inmates_){
+	# this extends to include useful ancillary items
+	df_inmates_overall_arr_supp_ <- 
+		dplyr:::left_join(
+			df_inmates_overall_arr_,
+			df_daily_inmates_,
+			by=c(
+				"min_import_date_hold"="import_date",
+				"name",
+				"arrested"
+			)
+		) %>%
+		dplyr::rename(
+			import_date = min_import_date
+		) %>%
+		dplyr::select(
+			defendant_id,
+			import_date,
+			name,
+			arrested,
+			max_import_date,
+			stay,
+			race,
+			gender,
+			age,
+			total_bond
+		)
+	#
+	return(df_inmates_overall_arr_supp_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_inmates_overall_arr_supp")
+```
+```{r fn_n_cur_count_by_date, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+fn_n_cur_count_by_date <- function(df_daily_inmates_){
+	df_n_cur_count_by_date_ <- 
+		df_daily_inmates_ %>% 
+			dplyr::group_by(
+				import_date
+			) %>%
+		dplyr::tally() %>%
+		dplyr::rename(
+			N = n
+		) %>% 
+		dplyr::inner_join(
+			df_daily_inmates_ %>%
+				reshape2::dcast(
+					import_date ~ gender, fun.aggregate=length
+				),
+			by = "import_date"
+		) %>%
+		dplyr::inner_join(
+			df_daily_inmates_ %>%
+				dplyr::filter(
+					race == "B" | race == "W"
+				) %>%
+				reshape2::dcast(
+					import_date ~ race, fun.aggregate=length
+				),
+			by = "import_date"
+		) %>%
+		dplyr::inner_join(
+			df_daily_inmates_ %>%
+				dplyr::filter(
+					race == "B" | race == "W"
+				) %>%
+				reshape2::dcast(
+					import_date ~ race + gender, fun.aggregate=length
+				),
+			by = "import_date"
+		)
+	#
+	return(df_n_cur_count_by_date_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_n_cur_count_by_date")
+```
+```{r fn_n_cur_count_by_date_matrix, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+fn_n_cur_count_by_date_matrix <- function(df_n_cur_count_by_date_){
+	df_n_cur_count_by_date_ %<>%
+		dplyr::mutate(
+			Fpct = 100*round(F/N, digits=3),
+			Mpct = 100*round(M/N, digits=3),
+			Bpct = 100*round(B/N, digits=3),
+			Wpct = 100*round(W/N, digits=3),
+			B_Fpct = 100*round(B_F/N, digits=3),
+			B_Mpct = 100*round(B_M/N, digits=3),
+			W_Fpct = 100*round(W_F/N, digits=3),
+			W_Mpct = 100*round(W_M/N, digits=3),
+			Flogit = round(qwraps2::logit(Fpct/100), digit=3),
+			Mlogit = round(qwraps2::logit(Mpct/100), digit=3),
+			Blogit = round(qwraps2::logit(Bpct/100), digit=3),
+			Wlogit = round(qwraps2::logit(Wpct/100), digit=3),
+			B_Flogit = round(qwraps2::logit(B_Fpct/100), digit=3),
+			B_Mlogit = round(qwraps2::logit(B_Mpct/100), digit=3),
+			W_Flogit = round(qwraps2::logit(W_Fpct/100), digit=3),
+			W_Mlogit = round(qwraps2::logit(W_Mpct/100), digit=3)
+		)
+	#
+	return(df_n_cur_count_by_date_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_n_cur_count_by_date_matrix")
+```
+```{r fn_mult_names}
+fn_mult_names <- function(df_inmates_overall_){
+	# multiple instances for these names:
+	df_mult_names_ <- 
+		df_inmates_overall_ %>% 
+			dplyr::ungroup() %>% 
+			dplyr::select(
+				name
+			) %>% 
+			dplyr::group_by(
+				name
+			) %>% 
+			dplyr::count() %>% 
+			dplyr::filter(
+				n>1
+			) %>%
+			dplyr::ungroup()
+	#
+	return(df_mult_names_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_mult_names")
+```
+```{r fn_mult_names_dates}
+fn_mult_names_dates <- function(df_mult_names_,df_inmates_overall_arr_){
+	# incorporate arrested and max_import_date
+	df_mult_names_dates_ <- 
+		dplyr::inner_join(
+			df_mult_names_ %>% 
+				dplyr::select(
+					name
+				),
+			df_inmates_overall_arr_ %>% 
+				dplyr::select(
+					name,
+					arrested,
+					max_import_date,
+					stay
+				),
+			by="name"
+		)
+	#
+	return(df_mult_names_dates_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_mult_names_dates")
+```
+```{r fn_mult_names_strung}
+fn_mult_names_strung <- function(df_mult_names_dates_){
+	df_mult_names_strung_ <- data.frame(matrix(ncol = 4, nrow = nrow(df_mult_names_dates_)))
+	# column "type" is a dummy that is thrown away
+	colnames(df_mult_names_strung_) <- c("name","arrested","max_import_date","type")
+	#
+	out_ <- 1
+	for (i in 1:nrow(df_mult_names_dates_)){
+		if (i == 1){
+			# get started
+			prev_name <- df_mult_names_dates_[i, "name"]
+			prev_arrested <- df_mult_names_dates_[i, "arrested"]
+			prev_mid <- df_mult_names_dates_[i, "max_import_date"]
+			# 
+			# write first part of first record
+			df_mult_names_strung_[out_,"name"] <- prev_name
+			df_mult_names_strung_[out_,"arrested"] <- prev_arrested
+		} else {
+			this_name <- df_mult_names_dates_[i, "name"]
+			this_arrested <- df_mult_names_dates_[i, "arrested"]
+			this_mid <- df_mult_names_dates_[i, "max_import_date"]
+			# 
+			# compare to previous
+			# if not a continuation, write completed record
+			# if continuation, reset pointers
+			if (this_name == prev_name & prev_mid == this_arrested){
+				# continuation
+				prev_arrested <- this_arrested
+				prev_mid <- this_mid
+				df_mult_names_strung_[out_,"type"] <- "C"
+			} else {
+				# finish writing out record
+				df_mult_names_strung_[out_,"max_import_date"] <- prev_mid
+				#
+				# advance to next out record
+				out_ <- out_ + 1
+				#
+				# reset pointers
+				prev_name <- this_name
+				prev_arrested <- this_arrested
+				prev_mid <- this_mid
+				#
+				# write first part of first record
+				df_mult_names_strung_[out_,"name"] <- prev_name
+				df_mult_names_strung_[out_,"arrested"] <- prev_arrested
+			}
+		}	
+	}
+	rm(this_name,this_arrested,this_mid)
+	#
+	# drop the rows where "type" is NA by using na.omit
+	df_mult_names_strung_ %<>% 
+		na.omit() %>% 
+		dplyr::select(
+			-type
+		) %>%
+		dplyr::mutate(
+			arrested = as.Date(arrested,origin="1970-01-01"),
+			max_import_date = as.Date(max_import_date,origin="1970-01-01"),
+			stay = max_import_date - arrested + 1
+		)
+	#
+	return(df_mult_names_strung_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_mult_names_strung")
+```
+```{r fn_daily_inmates_prep_0}
+fn_daily_inmates_prep_0 <- function(df_daily_inmates_){
+	df_daily_inmates_strung_0_ <-
+		df_daily_inmates_ %>%
+			dplyr::select(
+				import_date,
+				name,
+				arrested
+			) %>%
+			dplyr::mutate(
+				id = 2
+			)
+	#
+	return(df_daily_inmates_strung_0_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_daily_inmates_prep_0")
+```
+```{r fn_daily_inmates_prep_add}
+fn_daily_inmates_prep_add <- function(df_mult_names_strung_,N_mult_names_strung_stay_){
+	#
+	# use df_mult_names_strung to create rows, one for each day
+	# pick dates from CURRENT_DATES to account for the missing data
+	#
+	df_daily_inmates_strung_add_ <- data.frame(matrix(ncol = 4, nrow = N_mult_names_strung_stay_))
+	# column "type" is a dummy that is thrown away
+	colnames(df_daily_inmates_strung_add_) <- c("import_date","name","arrested","id")
+	#
+	i_ <- 1
+	for (j_ in 1:nrow(df_mult_names_strung_)){
+		this_name <- df_mult_names_strung_[j_,"name"]
+		this_arrested <- df_mult_names_strung_[j_,"arrested"]
+		CURRENT_DATES_start <- which(CURRENT_DATES == this_arrested)
+		this_mid <- df_mult_names_strung_[j_,"max_import_date"]
+		N_days_ <- as.integer(this_mid - this_arrested)
+		for (k_ in 0:N_days_){
+			df_daily_inmates_strung_add_[i_,"import_date"] <- this_arrested + k_
+			df_daily_inmates_strung_add_[i_,"name"] <- this_name
+			df_daily_inmates_strung_add_[i_,"arrested"] <- this_arrested
+			df_daily_inmates_strung_add_[i_,"id"] <- 1
+			i_ <- i_+1
+		}
+	}
+	rm(this_name,this_arrested,this_mid,N_days_)
+	rm(i_,j_,k_)
+	#
+	df_daily_inmates_strung_add_ %<>% 
+		dplyr::mutate(
+			import_date = as.Date(import_date,origin = "1970-01-01"),
+			arrested = as.Date(arrested,origin = "1970-01-01")
+		)
+	#
+	return(df_daily_inmates_strung_add_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_daily_inmates_prep_add")
+```
+```{r fn_inmates_overall_strung}
+fn_inmates_overall_strung <- function(df_daily_inmates_strung_){
+	# this finds the df_daily_inmates record with the earliest import date
+	df_inmates_overall_strung_ <- 
+		df_daily_inmates_strung_ %>% 
+			dplyr::select(
+				import_date,
+				name,
+				arrested
+			) %>% 
+			dplyr::group_by(
+				name,
+				arrested
+			) %>% 
+			dplyr::summarise(
+				max_import_date = max(import_date),
+				min_import_date = min(import_date)
+			) %>% 
+			dplyr::ungroup() %>% 
+			dplyr::mutate(
+				stay = max_import_date - min_import_date + 1
+			)
+	#
+	return(df_inmates_overall_strung_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_inmates_overall_strung")
+```
+```{r fn_daily_inmates_g_count_melt}
+fn_daily_inmates_g_count_melt <- function(df_daily_inmates_){
+	df_daily_inmates_g_count_melt_ <-
+		df_daily_inmates_ %>%
+			dplyr::filter(
+				holding_facility == "CENTRAL" | holding_facility == "MAIN JAIL"
+			) %>% 
+			dplyr::group_by(
+				holding_facility
+			) %>% 
+			reshape2::dcast(import_date ~ holding_facility) %>%
+			dplyr::mutate(
+				TOTAL = CENTRAL + `MAIN JAIL`
+			) %>%
+			reshape2::melt(
+				id.vars = "import_date",
+				variable.name = "holding_facility",
+				value.name = "N"
+			)
+	#
+	return(df_daily_inmates_g_count_melt_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_daily_inmates_g_count_melt")
+```
+```{r fn_make_daily_inmates_plot}
+fn_make_daily_inmates_plot <- function(df_daily_inmates_g_count_melt_){
+	# holding_facility counts:
+	df_daily_inmates_g_count_melt_ %>%
+		ggplot( aes( x = import_date, y = N, color = holding_facility ) ) +
+		geom_point() +
+		ylim(0,500) +
+		labs( 
+			x = "Import Date", 
+			y = "Inmates", 
+			title = paste("A1. Buncombe County Jail Inmates",FILE_DATE,"Data"),
+			subtitle = "CENTRAL and MAIN JAIL",
+			color = NULL
+		) +
+		theme( 
+			axis.text.x = element_text(angle=60, hjust=1), 
+			plot.title = element_text(hjust = 0.5),
+			plot.subtitle = element_text(hjust = 0.5),
+			legend.position = "top"
+		)+
+		scale_x_date(date_breaks = "months", date_labels = "%d-%m-%Y")
+	#
+	# default return
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_make_daily_inmates_plot")
+```
+```{r fn_prep_earliest}
+fn_prep_earliest <- function(df_daily_inmates_,df_inmates_overall_){
+	# MUST START AT CURRENT_DATES[1] + 91 TO AVOID DISTORTIONS
+	df_prep_earliest_ <-
+		dplyr::inner_join(
+			df_daily_inmates_ %>% 
+			dplyr::ungroup() %>%
+			dplyr::select(
+				import_date,
+				name,
+				arrested
+			),
+			df_inmates_overall_ %>%
+				dplyr::select(
+					name,
+					arrested,
+					min_import_date
+				),
+			by = c("name","arrested")
+		) %>%
+		dplyr::select(
+			import_date,
+			min_import_date
+		) %>%
+		dplyr::rename(
+			this_date = min_import_date
+		) %>%
+		dplyr::mutate(
+			eff_stay = import_date - this_date + 1
+		)
+	#
+	return(df_prep_earliest_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_prep_earliest")
+```
+```{r fn_make_mean_stay_compare_plot}
+fn_make_mean_stay_compare_plot <- function(
+	df_prep_earliest_ = df_prep_earliest, 
+	df_prep_arrested_ = df_prep_arrested, 
+	df_prep_strung_arrested_ = df_prep_strung_arrested
+){
+	#
+	# baked in comparison dataframes
+	# df_prep_earliest, df_prep_arrested, df_prep_strung_arrested
+	#
+	df_<- rbind(
+		df_prep_earliest_ %>%
+			dplyr::mutate(
+				DF = "Earliest"
+			),
+		df_prep_arrested_ %>%
+			dplyr::mutate(
+				DF = "Arrested"
+			),	
+		df_prep_strung_arrested_ %>%
+			dplyr::mutate(
+				DF = "Strung"
+			)	
+	) %>%
+	dplyr::group_by(
+		DF,
+		import_date
+	) %>%
+	dplyr::filter(
+		import_date > "2022-01-02"
+	) %>%
+	dplyr::summarize(
+		mean = as.numeric(mean(eff_stay))
+	)
+	#
+	df_$DF <- factor( df_$DF, levels = c( "Strung", "Arrested", "Earliest" ))
+	
+	plot_ <- df_ %>%
+	ggplot( aes( x = import_date, y = mean) ) +
+	geom_point( aes( color = DF ) ) +
+	scale_color_manual( values = c("#6600FF", "#FF0033", "#669900") ) +
+	labs( 
+		title = "Mean Stay for Strung, Arrested, and Earliest Date Methods",
+		subtitle = paste(FILE_DATE, "Data"),
+		color = NULL
+	) +
+	theme(
+		plot.title = element_text(hjust = 0.5),
+		plot.subtitle = element_text(hjust = 0.5),
+		legend.position = "top"
+	)
+	#
+	return(plot_)
+}
+```
+```{r, echo=FALSE}
+name_list <- check_exists("fn_make_mean_stay_compare_plot")
+```
+
+```{r fn_compute_stay_by_day, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+fn_compute_stay_by_day <- function(df_){
+	# using df_inmate_stays_summ  
+	# helpers
+	df_1_ <- data.frame(
+		matrix(
+			ncol = length(CURRENT_DATES), 
+			nrow = nrow(df_)
+		)
+	)
+	#
+	names(df_1_) <- as.character(as.numeric(CURRENT_DATES[1:length(CURRENT_DATES)]))
+	#
+	df_2_ <-
+		df_ %>%
+			dplyr::select(
+				defendant_id,
+				stay,
+				start_date,
+				end_date
+			) %>%
+			dplyr::mutate(
+				end_date = as.Date( ifelse( is.na(end_date), CURRENT_DATES[length(CURRENT_DATES)], end_date ), origin = "1970-01-01"),
+				start_date = as.numeric(start_date),
+				end_date = as.numeric(end_date)
+			) 
+	#
+	df_target_ <- cbind(
+		df_2_,
+		df_1_
+	)
+	# change df_2_
+	df_2_$S <- NA
+	#
+	rm( df_1_ )
+	#
+	# do the work
+	#
+	col_num_ <- 5
+	for (cd_ in CURRENT_DATES[1:length(CURRENT_DATES)]){
+		cd_date_ <- as.numeric(cd_)
+		#
+		df_2_%<>%
+			dplyr::mutate(
+				S =
+				ifelse( end_date < cd_date_ | start_date > cd_date_, NA, 
+						 cd_date_ - start_date + 1
+					)
+			)
+		#
+		df_target_[,col_num_] <- df_2_$S
+		col_num_ <- col_num_ + 1
+	}
+	#
+	return(df_target_)
+}
+```
+```{r}
+name_list <- check_exists("fn_compute_stay_by_day")
+```
+```{r fn_stay_by_day_melt, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+fn_stay_by_day_melt <- function(df_){
+	# using df_stay_by_day
+	df_freq_ <- 
+		df_ %>% 
+			dplyr::select(
+				-stay,
+				-start_date,
+				-end_date
+			) %>% 
+		reshape2::melt(
+			id.vars="defendant_id"
+		) %>% 
+		na.omit()
+	#
+	df_freq_$variable <- as.character.factor(df_freq_$variable)
+	#
+	df_freq_ %<>%
+		dplyr::mutate(
+			as_of_date = as.Date(as.numeric(variable), origin="1970-01-01")
+		) %>%
+		dplyr::select(
+			defendant_id,
+			value,
+			as_of_date
+		) %>%
+		dplyr::rename(
+			stay = value
+		)
+	#
+	return(df_freq_)
+}
+```
+```{r}
+name_list <- check_exists( "fn_stay_by_day_melt")
+```
+2023-08-03:  
+```{r fn_stay_by_day_melt_bins, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+fn_stay_by_day_melt_bins <- function(df_in_){
+	# using df_stay_by_day_melt
+	df_ <- 
+		df_in_ %>%
+			dplyr::select(
+				stay,
+				as_of_date
+			) %>%
+			dplyr::mutate(
+				Group = ifelse( stay <= 7, "bin1",
+					(ifelse( stay > 7 & stay <= 30, "bin2",
+						(ifelse( stay > 30 & stay <= 90, "bin3",
+							"bin4" 
+				)))))
+			) %>%
+			reshape2::dcast(
+				as_of_date + Group ~ ., 
+				length
+			) %>%
+			dplyr::rename(
+				N = '.'
+			) %>%
+			reshape2::dcast(
+				as_of_date ~ Group, 
+				value.var="N"
+			) 
+	#
+	df_ %<>% 
+		replace( is.na(.), 0 )
+	#
+	df_ %<>%
+		dplyr::mutate(
+			N = rowSums(across(where(is.numeric))),
+			pct1 = round(100*bin1/N, digits=2),
+			pct2 = round(100*bin2/N, digits=2),
+			pct3 = round(100*bin3/N, digits=2),
+			pct4 = round(100*bin4/N, digits=2)
+		)		
+}
+```
+```{r}
+name_list <- check_exists( "fn_stay_by_day_melt_bins")
+```
+2023-08-03:  
+```{r fn_pct_bins_stay_by_day_melt, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+fn_pct_bins_stay_by_day_melt <- function(df_in_){
+	# using df_stay_by_day_melt_bins
+	df_ <-
+		df_in_ %>%
+			dplyr::select(
+				as_of_date,
+				pct1,
+				pct2,
+				pct3,
+				pct4
+			) %>%
+			reshape2::melt(
+				id.vars = "as_of_date"
+			) %>%
+			dplyr::rename(
+				Group = variable,
+				pct = value
+			) %>%
+			dplyr::mutate(
+				Group = ifelse( Group=="pct1", Group_txt[1],
+					(ifelse( Group=="pct2", Group_txt[2],
+						(ifelse( Group=="pct3", Group_txt[3],
+							Group_txt[4]
+				)))))
+			)
+	#
+	return(df_)
+}
+```{r}
+name_list <- check_exists( "fn_pct_bins_stay_by_day_melt")
+```
+2023-08-03:  
+```{r fn_N_bins_stay_by_day_melt, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+fn_N_bins_stay_by_day_melt <- function(df_in_){
+	# using df_stay_by_day_melt_bins
+	df_ <-
+		df_in_ %>%
+			dplyr::select(
+				as_of_date,
+				bin1,
+				bin2,
+				bin3,
+				bin4
+			) %>%
+			reshape2::melt(
+				id.vars = "as_of_date"
+			) %>%
+			dplyr::rename(
+				Group = variable,
+				N = value
+			) %>%
+			dplyr::mutate(
+				Group = ifelse( Group=="bin1", Group_txt[1],
+					(ifelse( Group=="bin2", Group_txt[2],
+						(ifelse( Group=="bin3", Group_txt[3],
+							Group_txt[4]
+				)))))
+			)
+	#
+	return(df_)
+}
+```{r}
+name_list <- check_exists( "fn_N_bins_stay_by_day_melt")
+```
+2023-08-04:  
+```{r fn_stay_by_day_ml_MF, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+fn_stay_by_day_ml_MF <- function(df_in_,levels_){	
+	# using df_inmate_stays_summ
+	df_ <- fn_compute_stay_by_day(
+		df_in_ %>% 
+		dplyr::filter(
+			max_level %in% levels_
+		)
+	)
+	#
+	return(df_)
+}
+```{r}
+name_list <- check_exists( "fn_stay_by_day_ml_MF")
+```
+```{r fn_stay_by_day_weighted_freq, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+fn_stay_by_day_weighted_freq <- function(df_){
+	# using df_stay_by_day
+	df_freq_ <- 
+		df_ %>% 
+			dplyr::select(
+				-defendant_id,
+				-stay,
+				-start_date,
+				-end_date
+			) %>% 
+		reshape2::melt() %>% 
+		na.omit() %>% 
+		reshape2::dcast(
+			variable + value ~ ., 
+			length
+		) 
+	#
+	df_freq_$variable <- as.character.factor(df_freq_$variable)
+	#
+	df_freq_ %<>%
+		dplyr::mutate(
+			as_of_date = as.Date(as.numeric(variable), origin="1970-01-01")
+		) %>%
+		dplyr::rename(
+			stay = value,
+			N = '.'
+		) %>% 
+		dplyr::select(
+			-variable
+		)
+	#
+	return(df_freq_)
+}
+```
+```{r}
+name_list <- check_exists("fn_stay_by_day_weighted_freq")
+```
+
+```{r fn_stay_by_day_tables}
+fn_stay_by_day_tables <- function(df_in_){
+	# using df_stay_by_day
+	df_ <- apply(
+		(df_in_ %>% 
+			dplyr::select(
+				-defendant_id,
+				-stay,
+				-start_date,
+				-end_date
+			)
+		),
+		2,
+		as.data.frame(table)
+	)
+	#
+	return(df_)
+}
+```
+```{r}
+name_list <- check_exists("fn_stay_by_day_tables")
+```
+```
+```{r save_names}
+# produce the RData file that contains all these functions
+save(
+	list=name_list, 
+	file=paste0(RDataPath,"functions.RData")
+)
+```

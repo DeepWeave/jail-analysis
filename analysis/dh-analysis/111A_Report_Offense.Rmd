@@ -1,0 +1,130 @@
+---
+title: "Buncombe Jail Stay - Fluctuations"
+author: "DIH"
+date: "2023-08-08"
+output: html_document
+params:
+  SHOW_SCRIPT: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, echo=FALSE}
+# Ref:
+# from console create script of all R chunks
+# knitr::purl(input="Report_A_all_dates.Rmd", output="Report_A_all_dates_script.r", documentation=0)
+# https://stackoverflow.com/questions/71100718/add-labels-to-pie-chart-ggplot2-after-specifying-factor-orders
+# https://dethwench.com/pie-chart-ggplot-style-is-suprisingly-hard/
+#
+# to get grouping:
+# <dataframe> %>% dplyr::group_vars()
+```
+
+<!-- This program does NOT generate any data. It reads extant RData files. This allows tweaking of plots etc without the need to regenerate data. -->
+
+```{r, message=FALSE, warning=FALSE, echo=params$SHOW_SCRIPT}
+load(file = paste0(RDataPath,"df_charge_def.RData"))
+load(file = paste0(RDataPath,"CURRENT_DATES.RData"))
+load(file = paste0(RDataPath,"Group_txt.RData"))
+#
+load(file = paste0(RDataPath,"df_inmate_stays_summ.RData"))
+#
+load(file = paste0(RDataPath,"df_N_summ_bins_by_day.RData"))
+load(file = paste0(RDataPath,"df_N_summ_N_bins_by_day_melt.RData"))
+#
+load(file = paste0(RDataPath,"df_pct_bins_stay_by_day_melt_ml_M.RData"))
+load(file = paste0(RDataPath,"df_pct_bins_stay_by_day_melt_ml_F.RData"))
+load(file = paste0(RDataPath,"df_N_bins_stay_by_day_melt_ml_M.RData"))
+load(file = paste0(RDataPath,"df_N_bins_stay_by_day_melt_ml_F.RData"))
+#
+load(file=paste0(RDataPath,"functions.RData"))
+```
+
+## Buncombe County Jail "As-Of" Length of Stay for Stay Summary Data 
+  
+As a reminder, these as-of stays look backward for each import date, talleying the stays for the then-incarcerated inmates. This report uses the 2023-07-16-all_stays_summarized.csv file provided by E. Jackson. The data frame df_inmate_stays_summ is derived from it. The data is filtered to eliminate records with max_level 0, and also those where max_level=0 OR is_pretrial=0 or not_primary_custodian=1.
+  
+The "as-of" jail stay shows fluctuations. What might be associated with that behavior? It is important to note that at this time (July 2023) it has not been established whether these fluctuations are artefacts of binning the data into the four length of stay intervals. Put another way, whether and to what extent the fluctuations are real has not been determined.  
+  
+### Looking at Level of Offense  
+  
+There are several levels of offense (max_level). For this analysis, the level of offense is that which is in the df_inmate_stays_summ data frame. Level 0 is excluded. The counts are:  
+  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+df_inmate_stays_summ %>%
+	reshape2::dcast( max_level ~ . ) %>%
+	dplyr::rename(
+		N = '.'
+	)
+```
+  
+Class type and level are related as shown here:  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+df_charge_def %>% 
+	reshape2::dcast(class_type ~ level)
+```
+  
+The following plots look at felonies (max_level 5 and above) and misdemeanors (max_level 1 to 4). For clarity, the plots start at October 2022.  
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=10, fig.width=11}
+fn_make_pct_stay_plot(df_pct_bins_stay_by_day_melt_ml_M %>% dplyr::filter(as_of_date >= "2022-10-01"), "A. Misdemeanors:",60)
+```
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=10, fig.width=11}
+fn_make_pct_stay_plot(df_pct_bins_stay_by_day_melt_ml_F %>% dplyr::filter(as_of_date >= "2022-10-01"), "B. Felonies:",60)
+```
+  
+<!-- These are rather jumbled, so I present them individually. -->
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plt_A_1 <- fn_make_pct_stay_plot_one_up(df_pct_bins_stay_by_day_melt_ml_M %>% dplyr::filter(as_of_date>="2022-10-01"),1,60)
+plt_A_2 <- fn_make_pct_stay_plot_one_up(df_pct_bins_stay_by_day_melt_ml_M %>% dplyr::filter(as_of_date>="2022-10-01"),2,60)
+plt_A_3 <- fn_make_pct_stay_plot_one_up(df_pct_bins_stay_by_day_melt_ml_M %>% dplyr::filter(as_of_date>="2022-10-01"),3,60)
+plt_A_4 <- fn_make_pct_stay_plot_one_up(df_pct_bins_stay_by_day_melt_ml_M %>% dplyr::filter(as_of_date>="2022-10-01"),4,60)
+#
+plt_B_1 <- fn_make_pct_stay_plot_one_up(df_pct_bins_stay_by_day_melt_ml_F %>% dplyr::filter(as_of_date>="2022-10-01"),1,60)
+plt_B_2 <- fn_make_pct_stay_plot_one_up(df_pct_bins_stay_by_day_melt_ml_F %>% dplyr::filter(as_of_date>="2022-10-01"),2,60)
+plt_B_3 <- fn_make_pct_stay_plot_one_up(df_pct_bins_stay_by_day_melt_ml_F %>% dplyr::filter(as_of_date>="2022-10-01"),3,60)
+plt_B_4 <- fn_make_pct_stay_plot_one_up(df_pct_bins_stay_by_day_melt_ml_F %>% dplyr::filter(as_of_date>="2022-10-01"),4,60)
+#
+```
+  
+Misdemeanors (level 1 to 4):  
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=10, fig.width=11}
+cowplot::plot_grid(plt_A_1, plt_A_2, plt_A_3, plt_A_4, labels=NULL, cols=2)
+```
+  
+Felonies (level 5 and above):  
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=10, fig.width=11}
+cowplot::plot_grid(plt_B_1, plt_B_2, plt_B_3, plt_B_4, labels=NULL, cols=2)
+```
+  
+### Plots Showing Number of Inmates  
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plt_C_1 <- fn_make_N_stay_plot_one_up(df_N_bins_stay_by_day_melt_ml_M %>% dplyr::filter(as_of_date>="2022-10-01"),40,1,"Misdemeanors")
+plt_C_2 <- fn_make_N_stay_plot_one_up(df_N_bins_stay_by_day_melt_ml_M %>% dplyr::filter(as_of_date>="2022-10-01"),40,2,"Misdemeanors")
+plt_C_3 <- fn_make_N_stay_plot_one_up(df_N_bins_stay_by_day_melt_ml_M %>% dplyr::filter(as_of_date>="2022-10-01"),40,3,"Misdemeanors")
+plt_C_4 <- fn_make_N_stay_plot_one_up(df_N_bins_stay_by_day_melt_ml_M %>% dplyr::filter(as_of_date>="2022-10-01"),40,4,"Misdemeanors")
+#
+plt_D_1 <- fn_make_N_stay_plot_one_up(df_N_bins_stay_by_day_melt_ml_F %>% dplyr::filter(as_of_date>="2022-10-01"),100,1,"Felonies")
+plt_D_2 <- fn_make_N_stay_plot_one_up(df_N_bins_stay_by_day_melt_ml_F %>% dplyr::filter(as_of_date>="2022-10-01"),100,2,"Felonies")
+plt_D_3 <- fn_make_N_stay_plot_one_up(df_N_bins_stay_by_day_melt_ml_F %>% dplyr::filter(as_of_date>="2022-10-01"),100,3,"Felonies")
+plt_D_4 <- fn_make_N_stay_plot_one_up(df_N_bins_stay_by_day_melt_ml_F %>% dplyr::filter(as_of_date>="2022-10-01"),100,4,"Felonies")
+#
+```
+
+Misdemeanors (level 1 to 4):  
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=10, fig.width=11}
+cowplot::plot_grid(plt_C_1, plt_C_2, plt_C_3, plt_C_4, labels=NULL, cols=2)
+```
+  
+Felonies (level 5 and above):  
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=10, fig.width=11}
+cowplot::plot_grid(plt_D_1, plt_D_2, plt_D_3, plt_D_4, labels=NULL, cols=2)
+```
+  
