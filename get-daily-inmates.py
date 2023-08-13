@@ -416,6 +416,19 @@ def getInmateList(inputFileName):
     inmates.append(processInmateRecord(itm, importDate))
   return inmates
 
+def checkIntegrity(inmates):
+  ok = True
+  testInmates = {}
+  for m in inmates:
+    if m['name'] not in testInmates:
+      testInmates[m['name']] = m
+    else:
+      print('!!!!!!!!!!! INTEGRITY ERROR !!!!!!!!!!!')
+      print(m['name'], ' appears twice!')
+      print('!!!!!!!!!!! INTEGRITY ERROR !!!!!!!!!!!')
+      ok = False
+  return ok
+
 ############################
 ####    Main program    ####
 ############################
@@ -438,8 +451,10 @@ if args.importDate:
 print('Input file: ', inputFileName, ' input date: ', importDate, ', backDays = ', backDays, 'useDB = ', useDB)
 
 inmates = getInmateList(inputFileName)
-if doArrests:
-  previousInmateMap = getPreviousInmates(backDays)
-  createRecentArrestsFile(inmates, backDays, importDate)
-if useDB:
-  loadToDatabase(inmates)
+ok = checkIntegrity(inmates)
+if ok:
+  if doArrests:
+    previousInmateMap = getPreviousInmates(backDays)
+    createRecentArrestsFile(inmates, backDays, importDate)
+  if useDB:
+    loadToDatabase(inmates)
