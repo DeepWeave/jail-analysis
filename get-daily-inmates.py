@@ -178,6 +178,9 @@ def createColumnFormats(sample, workbook, worksheet):
 #  print(columnFormats)
   baseFormat = workbook.add_format({'font_color': 'black', 'text_wrap':True, 'valign': 'top'})
   baseFormat.set_border(1)
+  i_format = workbook.add_format({'font_color': 'black', 'text_wrap':True, 'valign': 'top', 'num_format': 'mm/dd'})
+  i_format.set_border(1)
+
   worksheet.freeze_panes(1, 0)
   i = 0
   worksheet.set_column(i, i, 5, baseFormat) #pull
@@ -188,15 +191,15 @@ def createColumnFormats(sample, workbook, worksheet):
   i = i + 1
   worksheet.set_column(i, i, 6, baseFormat) #ADMN
   i = i + 1
-  worksheet.set_column(i, i, 6, baseFormat) #atty-this
+  worksheet.set_column(i, i, 7, baseFormat) #atty-this
   i = i + 1
-  worksheet.set_column(i, i, 6, baseFormat) #atty-other
+  worksheet.set_column(i, i, 7, baseFormat) #atty-other
   i = i + 1
   worksheet.set_column(i, i, 20, baseFormat) #notes
   i = i + 1
   worksheet.set_column(i, i, 8, baseFormat) #PDO
   i = i + 1
-  worksheet.set_column(i, i, 7, baseFormat) #Ct-date
+  worksheet.set_column(i, i, 7, i_format) #Ct-date
   i = i + 1
   worksheet.set_column(i, i, 10, baseFormat) #Conflict
   i = i + 1
@@ -229,7 +232,7 @@ def createColumnFormats(sample, workbook, worksheet):
   b_ad2b = workbook.add_format({'font_color': '#02b050', 'bold': True})
   b_ad3b = workbook.add_format({'font_color': '#974805', 'bold': True})
   b_9999 = workbook.add_format({'font_color': '#974805', 'bold': True})
-  b_x = workbook.add_format({'bg_color': '#DCDCDC'})
+  all_x = workbook.add_format({'bg_color': '#DCDCDC'})
   d_yes = workbook.add_format({'font_color': '#02b050'})
   d_na = workbook.add_format({'bg_color': '#DCDCDC'})
   e_none = workbook.add_format({'bg_color': '#c6efce'})
@@ -253,13 +256,14 @@ def createColumnFormats(sample, workbook, worksheet):
   worksheet.conditional_format('B2:B1000', {'type': 'cell', 'criteria': '==', 'value': '"AD2B"', 'format': b_ad2b})
   worksheet.conditional_format('B2:B1000', {'type': 'cell', 'criteria': '==', 'value': '"AD3B"', 'format': b_ad3b})
   worksheet.conditional_format('B2:B1000', {'type': 'cell', 'criteria': '==', 'value': '"9999"', 'format': b_9999})
-  worksheet.conditional_format('B2:B1000', {'type': 'cell', 'criteria': '==', 'value': '"x"', 'format': b_x})
+  worksheet.conditional_format('A2:Z1000', {'type': 'cell', 'criteria': '==', 'value': '"x"', 'format': all_x})
   worksheet.conditional_format('D2:D1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': d_yes})
   worksheet.conditional_format('D2:D1000', {'type': 'text', 'criteria': 'containing', 'value': 'n/a', 'format': d_na})
   worksheet.conditional_format('E2:E1000', {'type': 'text', 'criteria': 'containing', 'value': 'none', 'format': e_none})
   worksheet.conditional_format('H2:H1000', {'type': 'text', 'criteria': 'containing', 'value': 'yes', 'format': h_yes})
   worksheet.conditional_format('H2:H1000', {'type': 'text', 'criteria': 'containing', 'value': 'no need', 'format': h_noneed})
   worksheet.conditional_format('H2:H1000', {'type': 'text', 'criteria': 'containing', 'value': 'waive', 'format': h_waive})
+
   worksheet.conditional_format('N2:N1000', {'type': 'text', 'criteria': 'containing', 'value': 'sentenced', 'format': n_sentenced})
   worksheet.conditional_format('N2:N1000', {'type': 'text', 'criteria': 'containing', 'value': 'no bond', 'format': n_nobond})
   worksheet.conditional_format('N2:N1000', {'type': 'text', 'criteria': 'containing', 'value': 'support', 'format': n_support})

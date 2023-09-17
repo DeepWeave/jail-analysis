@@ -1,4 +1,9 @@
 # Some Helpful SQL queries
+## Missing Data
+update stays set use_flag = 0 where 
+  -- start_date = '2022-01-03'
+  --start_date >= '2023-01-28' and start_date <= '2023-02-01'
+  --start_date >= '2023-05-23' and start_date <= '2023-06-02'
 
 ## Check for new charge types:
     select * from (
@@ -8,7 +13,7 @@
     ) a
     where ccharge IS null or cdesc is null
     select count (*) from stays where end_date is null
-    select count (*) from daily_inmates where import_date = '2023-08-05'
+    select count (*) from daily_inmates where import_date = '2023-09-18'
 ## Adding in new charge types
 insert into jaildata.charge_definitions (id, class, class_type, level, estimate, not_primary_custodian, 
 										 note, charge, description, violent, dwi, drugs, theft, violation, min_level,
