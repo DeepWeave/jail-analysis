@@ -16,7 +16,7 @@ Stays that began on 1/3/22 should not be used since we don't know when they actu
 
 For the following date ranges I was unable to do daily downloads. Lee Crayton of Buncombe County provided bookings data for these dates, but the charges listed there are as of the date he pulled the data, not the date of booking, so they should not be used for charge analysis (they are also as of midnight, not later in the morning):
 
-- start_date >= '2023-01-28' and start_date <= '2023-02-01' (the site was down). Data was provided by Lee Crayton, but (a)
+- start_date >= '2023-01-28' and start_date <= '2023-02-01' (the site was down). 
 - start_date >= '2023-05-23' and start_date <= '2023-06-02' (I was on vacation)
 
 Data for the following dates were downloaded at a different time than normal:
