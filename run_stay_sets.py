@@ -116,7 +116,6 @@ def loadStays():
 # Main program - for each stay, get all associated daily IDs
 ##############################################################
 
-# No records in daily_inmates for 1/28-2/1. Next set is 2/2
 counter = 0
 stays = loadStays()
 
