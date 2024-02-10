@@ -104,7 +104,7 @@ def loadEnds(ends, endDate):
 # No records in daily_inmates for 1/28-2/1. Next set is 2/2
 
 load_dotenv()
-#today = '2023-04-29'
+#today = '2024-02-09'
 today = datetime.datetime.now().strftime('%Y-%m-%d')
 yesterday = computeYesterday(today)
 

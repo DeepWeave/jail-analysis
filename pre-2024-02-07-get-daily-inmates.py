@@ -276,7 +276,6 @@ def createColumnFormats(sample, workbook, worksheet):
 def createRecentArrestsFile(inmates, backdays, importDate):
   global cutoffDate
   today = datetime.date.today()
-  today = datetime.datetime.strptime(importDate, '%Y-%m-%d').date()
   days = datetime.timedelta(backdays)
   cutoffDate = today - days
   print('Cut off date = ', cutoffDate)
@@ -347,11 +346,9 @@ def computeYesterday(today):
   cutoffDate = day - days
   return cutoffDate.strftime('%Y-%m-%d')
 
-def getPreviousInmates(backdays, importDate):
+def getPreviousInmates(backdays):
   global previousInmateMap
   today = datetime.date.today()
-  today = datetime.datetime.strptime(importDate, '%Y-%m-%d').date()
-
   days = datetime.timedelta(backdays)
   prevDate = today - days
 
@@ -393,44 +390,33 @@ def getInmateList(inputFileName):
   file.close()
   soup = BeautifulSoup(pageText, 'html.parser')
 
-  cards = soup.find_all("mat-card", "mat-mdc-card")
+  nms = soup.find_all("div", "p2c-card-title")
+  cards = soup.find_all("md-card", "p2c-card")
   print('Total inmates: ', len(cards))
   inmates = []
   for card in cards:
     itm = {}
-    for c1 in card.descendants:
-      if (c1.name == 'div' and c1.has_attr('id')):
-        if (c1['id'] == 'inmate-name'):
-          itm['name'] = getContent(c1)
-      elif (c1.name == 'span' and c1.has_attr('id')):
-        if (c1['id'] == 'age-span'):
-          itm['age'] = getContent(c1)
-        if (c1['id'] == 'gender-span'):
-          itm['gender'] = getContent(c1)
-        if (c1['id'] == 'race-span'):
-          itm['race'] = getContent(c1)
-        if (c1['id'] == 'arrest-date-span'):
-          itm['arrested'] = getContent(c1)
-        if (c1['id'] == 'release-date'):
-          itm['released'] = None
-          if (len(c1.contents) > 0):
-            itm['released'] = getContent(c1)
-        if (c1['id'] == 'primary-charge-span'):
-          itm['primary_charge'] = getContent(c1)
-        if (c1['id'] == 'holding-facility-span'):
-          itm['holding_facility'] = getContent(c1)
-        if (c1['id'] == 'total-bond-amount'):
-          itm['total_bond_amount:'] = getContent(c1)
-      elif (c1.name == 'label' and c1.has_attr('id')):
-        if (c1['id'] == 'court-date-label'):
-          c2 = c1.next_sibling
-          itm['court_date'] = getContent(c2)
-      elif (c1.name == 'table' and c1.has_attr('class') and 'charge' in c1['class']):
-        table = c1
+    for c1 in card.children:
+      if c1.name == 'md-card-title':
+        for c2 in c1.children:
+          if c2.name == 'md-card-title-text':
+            count = 0
+            children = list(filter(lambda r: r.name == 'div', c2.contents))
+            if 'p2c-card-title' not in children[0]['class']:
+              raise Exception('First div of title text is not the card title')
+            itm['name'] = children[0].contents[0]
+            processColumns(itm, children[2].contents)
+            processColumns(itm, children[3].contents)
+            processColumns(itm, children[4].contents)
+            processOneColumn(itm, children[5])
+            processColumns(itm, children[6].contents)
+            processOneColumn(itm, children[7])
+            processOneColumn(itm, children[8])
+      if c1.name == 'md-card-content':
+        table = c1.tbody
         rows = list(filter(lambda r: r.name == 'tr', table.contents))
         rows.pop(0)
         itm['charges'] = processCharges(rows)
-
     inmates.append(processInmateRecord(itm, importDate))
   return inmates
 
@@ -472,7 +458,7 @@ inmates = getInmateList(inputFileName)
 ok = checkIntegrity(inmates)
 if ok:
   if doArrests:
-    previousInmateMap = getPreviousInmates(backDays, importDate)
+    previousInmateMap = getPreviousInmates(backDays)
     createRecentArrestsFile(inmates, backDays, importDate)
   if useDB:
     loadToDatabase(inmates)
