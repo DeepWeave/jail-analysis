@@ -421,6 +421,11 @@ def getInmateList(inputFileName):
           itm['holding_facility'] = getContent(c1)
         if (c1['id'] == 'total-bond-amount'):
           itm['total_bond_amount:'] = getContent(c1)
+        if (c1['id'] == 'court-date-label'):
+          c2 = c1.next_sibling
+          itm['court_date'] = getContent(c2)
+      # 3/6/2024: The following no longer applies (they fixed the inconsistency
+      # see the lines just preceding this), but leaving for now
       elif (c1.name == 'label' and c1.has_attr('id')):
         if (c1['id'] == 'court-date-label'):
           c2 = c1.next_sibling
