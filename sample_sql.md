@@ -13,7 +13,7 @@ update stays set use_flag = 0 where
     ) a
     where ccharge IS null or cdesc is null
     select count (*) from stays where end_date is null
-    select count (*) from daily_inmates where import_date = '2024-01-20'
+    select count (*) from daily_inmates where import_date = '2024-03-05'
 
   	update daily_charges set charge = '' where charge is null
 
